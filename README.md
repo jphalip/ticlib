@@ -23,6 +23,14 @@ tic.deenergize()
 tic.enter_safe_start()
 ```
 
+# Installation
+
+The `ticlib` library is hosted on PyPI and can be installed by running this command:
+
+```shell
+pip install ticlib
+```
+
 # Available controllers
 
 ## Serial

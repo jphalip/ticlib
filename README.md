@@ -341,3 +341,13 @@ tic.settings.get_hp_mixed_decay_transition_time()
 Modifying settings is currently not supported.
 
 For more details, see the official [settings reference](https://www.pololu.com/docs/0J71/6).
+
+# Version history
+
+## 0.2.0 (April 20, 2021)
+
+- Added support for Micropython with serial and I2C.
+
+## 0.1.0 (April 18, 2021)
+
+Initial release.

@@ -1,5 +1,6 @@
-`ticlib` is a pure-Python library to drive [Pololu Tic stepper motor controllers](https://www.pololu.com/category/212/tic-stepper-motor-controllers)
-over a serial, I²C, or USB connection.
+`ticlib` is a pure-Python library to drive [Pololu Tic stepper motor controllers](https://www.pololu.com/category/212/tic-stepper-motor-controllers).
+
+This library supports serial, I²C, and USB connections for Python3; and serial and I²C for Micropython.
 
 # Example code
 
@@ -35,18 +36,23 @@ pip install ticlib
 
 ## Serial
 
-The serial controller has a dependency on the [pyserial](https://pypi.org/project/pyserial/) library.
-
-Example:
+Example using Python 3 and the [pyserial](https://pypi.org/project/pyserial/) library:
 
 ```python
 import serial
 from src.ticlib import TicSerial
 
-port_name = "/dev/ttyS0"
-baud_rate = 9600
-port = serial.Serial(port_name, baud_rate, timeout=0.1, write_timeout=0.1)
+port = serial.Serial("/dev/ttyS0", baud_rate=9600, timeout=0.1, write_timeout=0.1)
+tic = TicSerial(port)
+```
 
+Example using Micropython:
+
+```python
+from machine import UART
+from ticlib import TicSerial
+
+port = UART(0, baudrate=9600, timeout=100)
 tic = TicSerial(port)
 ```
 
@@ -65,24 +71,36 @@ For more details, see Pololu's official documentation on [serial command encodin
 
 ## I²C
 
-The I²C controller has a dependency on the [smbus2](https://pypi.org/project/smbus2/) library.
-
-Example:
+Example using Python 3 and the [smbus2](https://pypi.org/project/smbus2/) library.
 
 ```python
 from smbus2 import SMBus
-from src.ticlib import TicI2C
+from ticlib import TicI2C, SMBus2Backend
 
-bus = SMBus(3)
-address = 14
+bus = SMBus(3)  # Represents /dev/i2c-3
+address = 14    # Address of the Tic, that is its device number
+backend = SMBus2Backend(bus)
 
-tic = TicI2C(bus, address)
+tic = TicI2C(backend)
 ```
 
-Instantiation parameters for `TicI2C`:
+Example using Micropython:
 
-- `bus` (required): Your Tic's I²C bus. For example, `SMBus(3)` represents `/dev/i2c-3`.
-- `address` (required): Address of the Tic, that is its device number.
+```python
+from machine import I2C
+from ticlib import TicI2C, MachineI2CBackend
+
+i2c = I2C(1)  # ID of your I2C peripheral
+address = 14  # Address of the Tic, that is its device number
+backend = MachineI2CBackend(i2c, address)
+
+tic = TicI2C(backend)
+```
+
+Instantiation parameter for `TicI2C`:
+
+- `backend` (required): The I²C backend. Available options are `SMBus2Backend` for Python 3 and `MachineI2C` for
+  Micropython.
 
 Note: If you use a Raspberry Pi, make sure to follow the workaround described in the [Pololu documentation](https://www.pololu.com/docs/0J71/12.8).
 

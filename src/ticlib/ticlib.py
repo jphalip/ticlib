@@ -1,6 +1,27 @@
-from functools import partial
 
-__all__ = ['TicSerial', 'TicI2C', 'TicUSB', 'TIC_T825', 'TIC_T834', 'TIC_T500', 'TIC_N825', 'TIC_T249', 'TIC_36v4']
+__all__ = [
+    'TicSerial', 'TicI2C', 'TicUSB', 'SMBus2Backend', 'MachineI2CBackend',
+    'TIC_T825', 'TIC_T834', 'TIC_T500', 'TIC_N825', 'TIC_T249', 'TIC_36v4'
+]
+
+import sys
+
+if sys.implementation.name == 'micropython':
+    def partial(function, *args):
+        """
+        Substitute to Python's `functools.partial`
+        """
+        def _partial(*extra_args):
+            extra_args = extra_args[1:]
+            return function(*(args + extra_args))
+        return _partial
+else:
+    from functools import partial
+
+try:
+    from machine import I2C as machine_i2c
+except ImportError:
+    machine_i2c = None
 
 try:
     from smbus2 import i2c_msg
@@ -16,6 +37,45 @@ try:
     import usb.core as usb_core
 except ImportError:
     usb_core = None
+
+
+class MachineI2CBackend(object):
+    """
+    I2C backend that acts as a wrapper around the `machine.I2C` class.
+    """
+
+    def __init__(self, i2c, address):
+        if machine_i2c is None:
+            raise Exception("Missing dependency: machine.I2C (Micropython)")
+        self.i2c = i2c
+        self.address = address
+
+    def read(self, length):
+        return self.i2c.readfrom(self.address, length)
+
+    def write(self, serialized):
+        self.i2c.writeto(self.address, serialized)
+
+
+class SMBus2Backend(object):
+    """
+    I2C Backend that uses the smbus2 library.
+    """
+
+    def __init__(self, bus, address):
+        if i2c_msg is None:
+            raise Exception("Missing dependency: smbus2")
+        self.address = address
+        self.bus = bus
+
+    def read(self, length):
+        read = i2c_msg.read(self.address, length)
+        self.bus.i2c_rdwr(read)
+        return read.__bytes__()[0: length]
+
+    def write(self, serialized):
+        write = i2c_msg.write(self.address, serialized)
+        self.bus.i2c_rdwr(write)
 
 
 # Output formatting functions ---------------------------------------------------
@@ -400,8 +460,6 @@ class TicSerial(TicBase):
     """
 
     def __init__(self, port, device_number=None, crc_for_commands=False, crc_for_responses=False):
-        if serial is None:
-            raise Exception("Missing dependency: pyserial")
         self.port = port
         self.device_number = device_number
         self.crc_for_commands = crc_for_commands
@@ -491,11 +549,8 @@ class TicI2C(TicBase):
     Reference: https://www.pololu.com/docs/0J71/10
     """
 
-    def __init__(self, bus, address):
-        if i2c_msg is None:
-            raise Exception("Missing dependency: smbus2")
-        self.bus = bus
-        self.address = address
+    def __init__(self, backend):
+        self.backend = backend
         super().__init__()
 
     def _send_command(self, command_code, format, value=None):
@@ -516,29 +571,20 @@ class TicI2C(TicBase):
         elif format == BLOCK_READ:
             serialized += value
         # Write command to the bus
-        self._write(serialized)
+        self.backend.write(serialized)
 
     def _block_read(self, command_code, offset, length, format_response=None):
         """
         Returns the value of the specified variable or setting from the Tic.
         """
         self._send_command(command_code, BLOCK_READ, bytes([offset, length]))
-        result = self._read(length)
+        result = self.backend.read(length)
         if len(result) != length:
             raise RuntimeError("Expected to read {} bytes, got {}.".format(length, len(result)))
         if format_response is None:
             return result
         else:
             return format_response(result)
-
-    def _read(self, length):
-        read = i2c_msg.read(self.address, length)
-        self.bus.i2c_rdwr(read)
-        return read.__bytes__()[0: length]
-
-    def _write(self, serialized):
-        write = i2c_msg.write(self.address, serialized)
-        self.bus.i2c_rdwr(write)
 
 
 class TicUSB(TicBase):

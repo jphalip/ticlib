@@ -439,11 +439,17 @@ class TicBase(object):
         raise NotImplementedError
 
     def _define_commands(self):
+        """
+        Defines methods for all Tic commands.
+        """
         for command in COMMANDS:
             name, code, format = command
             setattr(self.__class__, name, partial(self._send_command, code, format))
 
     def _define_variables(self):
+        """
+        Defines methods for all Tic variables.
+        """
         self.variables = {}
         for variable in VARIABLES:
             name, offset, length, format_response = variable
@@ -454,7 +460,7 @@ class TicBase(object):
 
     def get_variables(self):
         """
-        Returns all of the Tic's variables and their values.
+        Returns all Tic variables and their values.
         """
         result = {}
         for variable in VARIABLES:

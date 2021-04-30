@@ -380,7 +380,7 @@ class Settings(object):
         for setting in SETTINGS:
             name, offset, length, format_response = setting
             setattr(
-                self.__class__,
+                self,
                 'get_' + name,
                 partial(self.tic._block_read, GET_SETTING_CMD, offset, length, format_response))
 
@@ -444,7 +444,7 @@ class TicBase(object):
         """
         for command in COMMANDS:
             name, code, format = command
-            setattr(self.__class__, name, partial(self._send_command, code, format))
+            setattr(self, name, partial(self._send_command, code, format))
 
     def _define_variables(self):
         """
@@ -454,7 +454,7 @@ class TicBase(object):
         for variable in VARIABLES:
             name, offset, length, format_response = variable
             setattr(
-                self.__class__,
+                self,
                 'get_' + name,
                 partial(self._block_read, GET_VARIABLE_CMD, offset, length, format_response))
 

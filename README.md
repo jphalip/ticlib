@@ -344,6 +344,10 @@ For more details, see the official [settings reference](https://www.pololu.com/d
 
 # Version history
 
+## 0.2.1 (May 4, 2021)
+
+- Issue #1: Fixed bug that prevented multiple Tic controllers from working at the same time.
+
 ## 0.2.0 (April 20, 2021)
 
 - Added support for Micropython with serial and I2C.

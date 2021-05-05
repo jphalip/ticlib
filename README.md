@@ -355,3 +355,13 @@ For more details, see the official [settings reference](https://www.pololu.com/d
 ## 0.1.0 (April 18, 2021)
 
 Initial release.
+
+# Notes for project maintainers
+
+To release a new version of this library:
+
+- Update version number in `src/ticlib/__init__.py`
+- Add release notes in the "Version history" section above.
+- Push tag of the form: `v<VERSION_NUMBER>` (e.g. `v.0.2.1`)
+- Run: `python3 -m build`
+- Run: `python3 -m twine upload dist/*`

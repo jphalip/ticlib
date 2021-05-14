@@ -387,21 +387,21 @@ class Settings(object):
         """
         Gets the serial device number from two separate bytes in the Tic's settings.
         """
-        first = self.tic._block_read(GET_SETTING_CMD, 0x07, 1)
-        second = self.tic._block_read(GET_SETTING_CMD, 0x69, 1)
-        first = bit_range(0, 6, first)
-        second = bit_range(0, 6, second)
-        return first + (second << 7)
+        lower = self.tic._block_read(GET_SETTING_CMD, 0x07, 1)
+        upper = self.tic._block_read(GET_SETTING_CMD, 0x69, 1)
+        lower = bit_range(0, 6, lower)
+        upper = bit_range(0, 6, upper)
+        return (lower & 0x7F) | ((upper & 0x7F) << 7)
 
     def get_serial_alt_device_number(self):
         """
         Gets the alternative serial device number from two separate bytes in the Tic's settings.
         """
-        first = self.tic._block_read(GET_SETTING_CMD, 0x6A, 1)
-        second = self.tic._block_read(GET_SETTING_CMD, 0x6B, 1)
-        first = bit_range(0, 6, first)
-        second = bit_range(0, 6, second)
-        return first + (second << 7)
+        lower = self.tic._block_read(GET_SETTING_CMD, 0x6A, 1)
+        upper = self.tic._block_read(GET_SETTING_CMD, 0x6B, 1)
+        lower = bit_range(0, 6, lower)
+        upper = bit_range(0, 6, upper)
+        return (lower & 0x7F) | ((upper & 0x7F) << 7)
 
     def get_all(self):
         """

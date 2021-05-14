@@ -37,7 +37,6 @@ if sys.implementation.name == 'micropython':
         Substitute to Python's `functools.partial`
         """
         def _partial(*extra_args):
-            extra_args = extra_args[1:]
             return function(*(args + extra_args))
         return _partial
 else:
@@ -123,7 +122,7 @@ def bit_range(start, end, value):
     # Remove first two characters
     binary = binary[2:]
     # Extract bits
-    bits = binary[::-1][start:end + 1][::-1]
+    bits = ''.join(reversed(''.join(reversed(binary))[start:end + 1]))  # Use "reversed()" instead of the less verbose [::-1] to be compatible with micropython
     # Convert to int
     return int(bits, 2)
 

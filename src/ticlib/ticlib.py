@@ -656,6 +656,6 @@ class TicUSB(TicBase):
         if len(result) != length:
             raise RuntimeError("Expected to read {} bytes, got {}.".format(length, len(result)))
         if format_response is None:
-            return result.tobytes()
+            return result
         else:
             return format_response(result)

@@ -356,6 +356,20 @@ For more details, see the official [settings reference](https://www.pololu.com/d
 
 Initial release.
 
+# Running the tests
+
+For Python:
+
+```shell
+docker run -it -v ${PWD}:/base -w /base python python /base/tests/tests.py
+```
+
+For Micropython:
+
+```shell
+docker run -it -v ${PWD}:/base -w /base mitchins/micropython-linux micropython /base/tests/tests.py
+```
+
 # Notes for project maintainers
 
 To release a new version of this library:

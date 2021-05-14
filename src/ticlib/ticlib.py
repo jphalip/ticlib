@@ -480,7 +480,7 @@ def _get_crc_7(message):
             if crc & 1:
                 crc ^= 0x91
             crc >>= 1
-    return crc.to_bytes(1, "little")
+    return crc.to_bytes(1, 'little')
 
 
 class TicSerial(TicBase):
@@ -562,7 +562,7 @@ class TicSerial(TicBase):
             message = response[0:length]
             # Oddly, response[-1] returns an int instead of a byte, so we use this more convoluted notation:
             crc = int.to_bytes(
-                response[-1], 1, "little")
+                response[-1], 1, 'little')
             # Verify that the CRC byte returned by the Tic is correct
             if crc == _get_crc_7(message):
                 # Success: the CRC byte is correct

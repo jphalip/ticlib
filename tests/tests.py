@@ -32,6 +32,40 @@ sys.path.append('/'.join(__file__.split('/')[0:-2]) + '/src')
 from ticlib import *
 
 
+class MockSerialPort(object):
+
+    def __init__(self):
+        self.returned_values = None
+        self.writes = []
+
+    def set_returned_values(self, values):
+        self.returned_values = values
+
+    def read(self, length):
+        if self.returned_values:
+            return self.returned_values.pop(0)
+
+    def write(self, serialized):
+        self.writes.append(serialized)
+
+
+class MockI2CBackend(object):
+
+    def __init__(self):
+        self.returned_values = None
+        self.writes = []
+
+    def set_returned_values(self, values):
+        self.returned_values = values
+
+    def read(self, length):
+        if self.returned_values:
+            return self.returned_values.pop(0)
+
+    def write(self, serialized):
+        self.writes.append(serialized)
+
+
 def int_to_bytes(value, length):
     if value < 0:
         value = value + 2**32
@@ -40,17 +74,44 @@ def int_to_bytes(value, length):
 
 class Tests(object):
 
-    def test_multiple_tics(self):
-        """
-        Ensure that multiple Tics can be used at the same time.
-        See: https://github.com/jphalip/ticlib/issues/1
-        """
-        tic1 = TicUSB()
-        tic1.usb.set_returned_values([int_to_bytes(1, 4)])
-        tic2 = TicUSB()
-        tic2.usb.set_returned_values([int_to_bytes(2, 4)])
-        assert tic1.get_current_position() == 1
-        assert tic2.get_current_position() == 2
+    def test_serial_variable(self):
+        tic = TicSerial(MockSerialPort())
+        tic.port.set_returned_values([int_to_bytes(99, 4)])
+        assert tic.get_current_position() == 99
+
+    def test_serial_commands(self):
+        tic = TicSerial(MockSerialPort())
+        # 32-bit parameter
+        tic.set_target_position(-99)
+        assert tic.port.writes[-1] == b'\xe0\x0f\x1d\x7f\x7f\x7f'
+        # 7-bit parameter
+        tic.go_home(1)
+        assert tic.port.writes[-1] == b'\x97\x01'
+        # Quick command (no parameters)
+        tic.energize()
+        assert tic.port.writes[-1] == b'\x85'
+
+    def test_i2c_variable(self):
+        tic = TicI2C(MockI2CBackend())
+        tic.backend.set_returned_values([int_to_bytes(99, 4)])
+        assert tic.get_current_position() == 99
+
+    def test_i2c_commands(self):
+        tic = TicI2C(MockI2CBackend())
+        # 32-bit parameter
+        tic.set_target_position(-99)
+        assert tic.backend.writes[-1] == b'\xe0\x9d\xff\xff\xff'
+        # 7-bit parameter
+        tic.go_home(1)
+        assert tic.backend.writes[-1] == b'\x97\x01'
+        # Quick command (no parameters)
+        tic.energize()
+        assert tic.backend.writes[-1] == b'\x85'
+
+    def test_usb_variable(self):
+        tic = TicUSB()
+        tic.usb.set_returned_values([int_to_bytes(99, 4)])
+        assert tic.get_current_position() == 99
 
     def test_usb_commands(self):
         tic = TicUSB()
@@ -64,6 +125,18 @@ class Tests(object):
         tic.energize()
         assert tic.usb.calls[-1] == (0x40, 0x85, 0, 0, 0)
 
+    def test_multiple_tics(self):
+        """
+        Ensure that multiple Tics can be used at the same time.
+        See: https://github.com/jphalip/ticlib/issues/1
+        """
+        tic1 = TicUSB()
+        tic1.usb.set_returned_values([int_to_bytes(1, 4)])
+        tic2 = TicUSB()
+        tic2.usb.set_returned_values([int_to_bytes(2, 4)])
+        assert tic1.get_current_position() == 1
+        assert tic2.get_current_position() == 2
+
     def test_variable_incorrect_length(self):
         tic = TicUSB()
         tic.usb.set_returned_values([int_to_bytes(42, 2)])
@@ -73,11 +146,6 @@ class Tests(object):
             assert str(excinfo) == "Expected to read 4 bytes, got 2."
         else:
             raise Exception()
-
-    def test_variable_success(self):
-        tic = TicUSB()
-        tic.usb.set_returned_values([int_to_bytes(42, 4)])
-        assert tic.get_current_position() == 42
 
     def test_boolean(self):
         """

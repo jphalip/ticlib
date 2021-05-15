@@ -30,8 +30,8 @@ class MockUSB(object):
         self.calls = []
         self.returned_values = None
 
-    def set_returned_values(self, value):
-        self.returned_values = value
+    def set_returned_values(self, values):
+        self.returned_values = values
 
     def ctrl_transfer(self, bmRequestType, bRequest, wValue, wIndex, data_or_wLength):
         self.calls.append((bmRequestType, bRequest, wValue, wIndex, data_or_wLength))

@@ -344,6 +344,10 @@ For more details, see the official [settings reference](https://www.pololu.com/d
 
 # Version history
 
+## 0.2.2 (May 14, 2021)
+
+- Fixed some bugs for Micropython
+
 ## 0.2.1 (May 4, 2021)
 
 - Issue #1: Fixed bug that prevented multiple Tic controllers from working at the same time.
@@ -376,6 +380,6 @@ To release a new version of this library:
 
 - Update version number in `src/ticlib/__init__.py`
 - Add release notes in the "Version history" section above.
-- Push tag of the form: `v<VERSION_NUMBER>` (e.g. `v.0.2.1`)
+- Create and push tag of the form: `v<VERSION_NUMBER>` (e.g. `v.0.2.1`)
 - Run: `python3 -m build`
 - Run: `python3 -m twine upload dist/*`

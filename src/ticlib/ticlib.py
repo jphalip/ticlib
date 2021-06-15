@@ -542,7 +542,9 @@ class TicSerial(TicBase):
         # Read the returned value
         result = self._read_response(length)
         # Verify and format the returned value
-        if len(result) != length:
+        if result is None:
+            raise RuntimeError("Read response returned 'None', read likely timed out")
+        elif len(result) != length:
             raise RuntimeError("Expected to read {} bytes, got {}.".format(length, len(result)))
         if format_response is None:
             return result

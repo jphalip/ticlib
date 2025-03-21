@@ -966,7 +966,7 @@ class Settings:
         """
         ...
 
-    # Stubs for each get_<setting>() method with docstrings (matching the "if TYPE_CHECKING:" block in your code):
+    # Stubs for each get_<setting>() method with docstrings
 
     def get_control_mode(self) -> int:
         '''

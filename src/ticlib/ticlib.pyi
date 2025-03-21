@@ -6,12 +6,12 @@
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 #
-# 1. Redistributions of source code must retain the above copyright notice, this
-# list of conditions and the following disclaimer.
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
 #
 # 2. Redistributions in binary form must reproduce the above copyright notice,
-# this list of conditions and the following disclaimer in the documentation
-# and/or other materials provided with the distribution.
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -52,76 +52,1300 @@ SETTINGS: list[tuple[str, int, int, Any]]
 GET_VARIABLE_CMD: int
 GET_SETTING_CMD: int
 
+
 def partial(function: Any, *args: Any) -> Any:
     """
-    MicroPython fallback for functools.partial.
+    **Description**: MicroPython fallback for functools.partial.
     """
     ...
 
+
 def boolean(bit_index: int, value: bytes) -> bool:
     """
-    Returns True if the bit located at 'bit_index' in the given 'value' is set.
+    **Description**: Returns True if the bit located at `bit_index` in `value` is set.
+
     The least-significant bit is index 0.
     """
     ...
 
+
 def bit_range(start: int, end: int, value: bytes) -> int:
     """
-    Returns the bits between 'start' and 'end' in 'value'.
+    **Description**: Returns the bits between `start` and `end` in `value`.
     """
     ...
+
 
 def signed_int(value: bytes) -> int:
     """
-    Interprets 'value' (little-endian) as a signed integer.
+    **Description**: Interprets `value` (in little-endian order) as a signed integer.
     """
     ...
+
 
 def unsigned_int(value: bytes) -> int:
     """
-    Interprets 'value' (little-endian) as an unsigned integer.
+    **Description**: Interprets `value` (in little-endian order) as an unsigned integer.
     """
     ...
+
 
 def _get_crc_7(message: bytes) -> bytes:
     """
-    Calculates the 7-bit CRC for 'message' per Pololu's documentation.
+    **Description**: Calculates the 7-bit CRC for `message` per Pololu's documentation.
     """
     ...
 
+
 class MachineI2CBackend:
     """
-    I2C backend that wraps 'machine.I2C'.
+    **Description**: I2C backend that wraps `machine.I2C`.
     """
 
     def __init__(self, i2c: Any, address: int) -> None: ...
     def read(self, length: int) -> bytes: ...
     def write(self, serialized: bytes) -> None: ...
 
+
 class SMBus2Backend:
     """
-    I2C backend that uses smbus2.
+    **Description**: I2C backend that uses the smbus2 library.
     """
 
     def __init__(self, bus: Any, address: int) -> None: ...
     def read(self, length: int) -> bytes: ...
     def write(self, serialized: bytes) -> None: ...
 
+
 #
-# TicBase merges commands, variable getters, and settings
+# Settings class – for reading non-volatile settings.
+#
+class Settings:
+    """
+    **Description**: Class used to manage the Tic's settings.
+    Dynamically adds `get_<setting>()` methods using partial().
+    """
+
+    def __init__(self, tic: Any) -> None:
+        """
+        **Description**: For each setting in SETTINGS, sets an attribute
+        `get_<name>` that calls `tic._block_read(...)`.
+        """
+        ...
+
+    def get_serial_device_number(self) -> int:
+        """
+        **Description**: Retrieves the serial device number from two separate bytes.
+        """
+        ...
+
+    def get_serial_alt_device_number(self) -> int:
+        """
+        **Description**: Retrieves the alternative serial device number from two separate bytes.
+        """
+        ...
+
+    def get_all(self) -> dict[str, Any]:
+        """
+        **Description**: Returns a dictionary of all settings (name -> value).
+        """
+        ...
+
+    def get_control_mode(self) -> int:
+        """
+        **Description**: Determines the Tic's control mode.
+
+        **Offset**: 0x01
+
+        **Type**: unsigned 8-bit
+
+        **Data**:
+            0: Serial / I2C / USB  
+            1: STEP/DIR  
+            2: RC position  
+            3: RC speed  
+            4: Analog position  
+            5: Analog speed  
+            6: Encoder position  
+            7: Encoder speed
+
+        **Default**: 0 (Serial / I2C / USB)
+        """
+        ...
+
+    def get_disable_safe_start(self) -> bool:
+        """
+        **Description**: Disables the safe start feature if set.
+
+        **Offset**: Bit 0 of byte 0x03
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_ignore_err_line_high(self) -> bool:
+        """
+        **Description**: Disables the "ERR line high" error if set.
+
+        **Offset**: Bit 0 of byte 0x04
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_auto_clear_driver_error(self) -> bool:
+        """
+        **Description**: When enabled, the Tic periodically clears latched driver errors.
+
+        **Offset**: Bit 0 of byte 0x08
+
+        **Type**: boolean
+
+        **Default**: true
+        """
+        ...
+
+    def get_never_sleep(self) -> bool:
+        """
+        **Description**: Prevents the Tic from sleeping if USB power is present but VIN is not.
+
+        **Offset**: Bit 0 of byte 0x02
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_vin_calibration(self) -> int:
+        """
+        **Description**: Adjusts scaling of VIN readings (positive increases, negative decreases).
+
+        **Offset**: 0x14
+
+        **Type**: signed 16-bit
+
+        **Default**: 0
+
+        **Range**: -500 to +500
+        """
+        ...
+
+    def get_soft_error_response(self) -> int:
+        """
+        **Description**: Sets the soft error response behavior.
+
+        **Offset**: 0x53
+
+        **Type**: unsigned 8-bit
+
+        **Data**:
+            0: De-energize  
+            1: Halt and hold  
+            2: Decelerate to hold  
+            3: Go to position
+
+        **Default**: 2 (Decelerate to hold)
+        """
+        ...
+
+    def get_soft_error_position(self) -> int:
+        """
+        **Description**: Position to move to if soft error response is "Go to position".
+
+        **Offset**: 0x54
+
+        **Type**: signed 32-bit
+
+        **Default**: 0
+
+        **Range**: -2,147,483,648 to 2,147,483,647
+        """
+        ...
+
+    def get_current_limit_during_error(self) -> int:
+        """
+        **Description**: Uses a different current limit during errors, unless set to 0xFF.
+
+        **Offset**: 0x31
+
+        **Type**: unsigned 8-bit (or 0xFF to disable)
+
+        **Default**: 0
+
+        **Range**: 0 to the normal current limit (or disabled)
+        """
+        ...
+
+    def get_serial_baud_rate(self) -> int:
+        """
+        **Description**: The serial baud rate (in bits per second), stored as a 16-bit generator value.
+
+        **Offset**: 0x06
+
+        **Type**: unsigned 16-bit
+
+        **Default**: 9600
+
+        **Range**: 200 to 115385
+        """
+        ...
+
+    def get_serial_enable_alt_device_number(self) -> bool:
+        """
+        **Description**: If set, the Tic listens to an alternate device number.
+
+        **Offset**: Bit 7 of byte 0x6A
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_serial_14bit_device_number(self) -> bool:
+        """
+        **Description**: Allows device numbers up to 16383 when enabled.
+
+        **Offset**: Bit 3 of byte 0x0B
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_serial_response_delay(self) -> int:
+        """
+        **Description**: Minimum delay (in microseconds) before a serial response or I2C processing.
+
+        **Offset**: 0x5E
+
+        **Type**: unsigned 8-bit
+
+        **Default**: 0
+
+        **Range**: 0 to 255
+        """
+        ...
+
+    def get_serial_command_timeout(self) -> int:
+        """
+        **Description**: Timeout (in ms) before a "command timeout" error is flagged.
+
+        **Offset**: 0x09
+
+        **Type**: unsigned 16-bit
+
+        **Default**: 1000
+
+        **Range**: 0 to 60000
+        """
+        ...
+
+    def get_serial_crc_for_commands(self) -> bool:
+        """
+        **Description**: Requires a 7-bit CRC on incoming serial commands if true.
+
+        **Offset**: Bit 0 of byte 0x0B
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_serial_crc_for_responses(self) -> bool:
+        """
+        **Description**: Appends a 7-bit CRC to serial responses if true.
+
+        **Offset**: Bit 1 of byte 0x0B
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_serial_7bit_responses(self) -> bool:
+        """
+        **Description**: Encodes serial responses with 7-bit bytes only if true.
+
+        **Offset**: Bit 2 of byte 0x0B
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_encoder_prescaler(self) -> int:
+        """
+        **Description**: For encoder modes, number of encoder counts per stepper unit.
+
+        **Offset**: 0x58
+
+        **Type**: unsigned 32-bit
+
+        **Default**: 1
+
+        **Range**: 1 to 2,147,483,647
+        """
+        ...
+
+    def get_encoder_postscaler(self) -> int:
+        """
+        **Description**: For encoder modes, size of each stepper unit.
+
+        **Offset**: 0x37
+
+        **Type**: unsigned 32-bit
+
+        **Default**: 1
+
+        **Range**: 1 to 2,147,483,647
+        """
+        ...
+
+    def get_encoder_unlimited(self) -> bool:
+        """
+        **Description**: Enables unbounded position control if set.
+
+        **Offset**: Bit 0 of 0x5C
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_input_averaging_enabled(self) -> bool:
+        """
+        **Description**: Enables averaging for RC/analog inputs.
+
+        **Offset**: Bit 0 of 0x2E
+
+        **Type**: boolean
+
+        **Default**: true
+        """
+        ...
+
+    def get_input_hysteresis(self) -> int:
+        """
+        **Description**: Amount of hysteresis to apply to RC/analog inputs.
+
+        **Offset**: 0x2F
+
+        **Type**: unsigned 16-bit
+
+        **Default**: 0
+
+        **Range**: 0 to 65535
+        """
+        ...
+
+    def get_input_invert(self) -> bool:
+        """
+        **Description**: Inverts input direction for RC/analog modes if true.
+
+        **Offset**: 0x21
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_input_max(self) -> int:
+        """
+        **Description**: Maximum value for RC/analog input scaling.
+
+        **Offset**: 0x28
+
+        **Type**: unsigned 16-bit
+
+        **Default**: 4095
+
+        **Range**: 0 to 4095
+        """
+        ...
+
+    def get_output_max(self) -> int:
+        """
+        **Description**: Maximum target value for RC/analog scaling.
+
+        **Offset**: 0x32
+
+        **Type**: signed 32-bit
+
+        **Default**: 200
+
+        **Range**: 0 to 2,147,483,647
+        """
+        ...
+
+    def get_input_neutral_max(self) -> int:
+        """
+        **Description**: Neutral zone upper bound for RC/analog inputs.
+
+        **Offset**: 0x26
+
+        **Type**: unsigned 16-bit
+
+        **Default**: 2080
+
+        **Range**: 0 to 4095
+        """
+        ...
+
+    def get_input_neutral_min(self) -> int:
+        """
+        **Description**: Neutral zone lower bound for RC/analog inputs.
+
+        **Offset**: 0x24
+
+        **Type**: unsigned 16-bit
+
+        **Default**: 2015
+
+        **Range**: 0 to 4095
+        """
+        ...
+
+    def get_input_min(self) -> int:
+        """
+        **Description**: Minimum value for RC/analog input scaling.
+
+        **Offset**: 0x22
+
+        **Type**: unsigned 16-bit
+
+        **Default**: 0
+
+        **Range**: 0 to 4095
+        """
+        ...
+
+    def get_output_min(self) -> int:
+        """
+        **Description**: Minimum target value for RC/analog scaling.
+
+        **Offset**: 0x2A
+
+        **Type**: signed 32-bit
+
+        **Default**: -200
+
+        **Range**: -2,147,483,647 to 0
+        """
+        ...
+
+    def get_input_scaling_degree(self) -> int:
+        """
+        **Description**: Determines the polynomial degree for scaling RC/analog inputs.
+
+        **Offset**: 0x20
+
+        **Type**: unsigned 8-bit
+
+        **Data**:
+            0: linear  
+            1: quadratic  
+            2: cubic
+
+        **Default**: 0 (linear)
+        """
+        ...
+
+    def get_scl_config(self) -> int:
+        """
+        **Description**: Pin configuration for the SCL line.
+
+        **Offset**: 0x3B
+
+        **Type**: 8-bit
+
+        **Default**: 0
+        """
+        ...
+
+    def get_scl_pin_function(self) -> int:
+        """
+        **Description**: Extracted pin function from SCL configuration.
+
+        **Offset**: 0x3B
+
+        **Type**: bits [0..3]
+
+        **Default**: 0
+
+        **Data**:
+            0: Default  
+            1: User I/O  
+            2: User input  
+            3: Potentiometer power  
+            4: SCL  
+            7: Kill switch  
+            8: Limit switch forward  
+            9: Limit switch reverse
+        """
+        ...
+
+    def get_scl_enable_analog(self) -> bool:
+        """
+        **Description**: Whether analog readings are enabled on SCL.
+
+        **Offset**: Bit 6 of 0x3B
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_scl_enable_pull_up(self) -> bool:
+        """
+        **Description**: Whether internal pull-up is enabled on SCL.
+
+        **Offset**: Bit 7 of 0x3B
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_scl_active_high(self) -> bool:
+        """
+        **Description**: Determines if SCL switch is active high.
+
+        **Offset**: Bit 0 of 0x36
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_scl_kill_switch(self) -> bool:
+        """
+        **Description**: Indicates if SCL is mapped as a kill switch.
+
+        **Offset**: Bit 0 of 0x5D
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_scl_limit_switch_forward(self) -> bool:
+        """
+        **Description**: Indicates if SCL is used as a forward limit switch.
+
+        **Offset**: Bit 0 of 0x5F
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_scl_limit_switch_reverse(self) -> bool:
+        """
+        **Description**: Indicates if SCL is used as a reverse limit switch.
+
+        **Offset**: Bit 0 of 0x60
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_sda_config(self) -> int:
+        """
+        **Description**: Pin configuration for the SDA line.
+
+        **Offset**: 0x3C
+
+        **Type**: 8-bit
+
+        **Default**: 0
+        """
+        ...
+
+    def get_sda_pin_function(self) -> int:
+        """
+        **Description**: Extracted pin function for SDA.
+
+        **Offset**: 0x3C
+
+        **Type**: bits [0..3]
+
+        **Default**: 0
+        """
+        ...
+
+    def get_sda_enable_analog(self) -> bool:
+        """
+        **Description**: Whether analog readings are enabled on SDA.
+
+        **Offset**: Bit 6 of 0x3C
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_sda_enable_pull_up(self) -> bool:
+        """
+        **Description**: Whether internal pull-up is enabled on SDA.
+
+        **Offset**: Bit 7 of 0x3C
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_sda_active_high(self) -> bool:
+        """
+        **Description**: Determines if SDA switch is active high.
+
+        **Offset**: Bit 1 of 0x36
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_sda_kill_switch(self) -> bool:
+        """
+        **Description**: Indicates if SDA is mapped as a kill switch.
+
+        **Offset**: Bit 1 of 0x5D
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_sda_limit_switch_forward(self) -> bool:
+        """
+        **Description**: Indicates if SDA is used as a forward limit switch.
+
+        **Offset**: Bit 1 of 0x5F
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_sda_limit_switch_reverse(self) -> bool:
+        """
+        **Description**: Indicates if SDA is used as a reverse limit switch.
+
+        **Offset**: Bit 1 of 0x60
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_tx_config(self) -> int:
+        """
+        **Description**: Pin configuration for the TX line.
+
+        **Offset**: 0x3D
+
+        **Type**: 8-bit
+
+        **Default**: 0
+        """
+        ...
+
+    def get_tx_pin_function(self) -> int:
+        """
+        **Description**: Extracted pin function for TX.
+
+        **Offset**: 0x3D
+
+        **Type**: bits [0..3]
+
+        **Default**: 0
+        """
+        ...
+
+    def get_tx_enable_analog(self) -> bool:
+        """
+        **Description**: Whether analog readings are enabled on TX.
+
+        **Offset**: Bit 6 of 0x3D
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_tx_active_high(self) -> bool:
+        """
+        **Description**: Determines if TX switch is active high.
+
+        **Offset**: Bit 2 of 0x36
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_tx_kill_switch(self) -> bool:
+        """
+        **Description**: Indicates if TX is mapped as a kill switch.
+
+        **Offset**: Bit 2 of 0x5D
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_tx_limit_switch_forward(self) -> bool:
+        """
+        **Description**: Indicates if TX is used as a forward limit switch.
+
+        **Offset**: Bit 2 of 0x5F
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_tx_limit_switch_reverse(self) -> bool:
+        """
+        **Description**: Indicates if TX is used as a reverse limit switch.
+
+        **Offset**: Bit 2 of 0x60
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_rx_config(self) -> int:
+        """
+        **Description**: Pin configuration for the RX line.
+
+        **Offset**: 0x3E
+
+        **Type**: 8-bit
+
+        **Default**: 0
+        """
+        ...
+
+    def get_rx_pin_function(self) -> int:
+        """
+        **Description**: Extracted pin function for RX.
+
+        **Offset**: 0x3E
+
+        **Type**: bits [0..3]
+
+        **Default**: 0
+        """
+        ...
+
+    def get_rx_enable_analog(self) -> bool:
+        """
+        **Description**: Whether analog readings are enabled on RX.
+
+        **Offset**: Bit 6 of 0x3E
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_rx_active_high(self) -> bool:
+        """
+        **Description**: Determines if RX switch is active high.
+
+        **Offset**: Bit 3 of 0x36
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_rx_kill_switch(self) -> bool:
+        """
+        **Description**: Indicates if RX is mapped as a kill switch.
+
+        **Offset**: Bit 3 of 0x5D
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_rx_limit_switch_forward(self) -> bool:
+        """
+        **Description**: Indicates if RX is used as a forward limit switch.
+
+        **Offset**: Bit 3 of 0x5F
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_rx_limit_switch_reverse(self) -> bool:
+        """
+        **Description**: Indicates if RX is used as a reverse limit switch.
+
+        **Offset**: Bit 3 of 0x60
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_rc_config(self) -> int:
+        """
+        **Description**: Pin configuration for the RC line (pulse input).
+
+        **Offset**: 0x3F
+
+        **Type**: 8-bit
+
+        **Default**: 0
+        """
+        ...
+
+    def get_rc_active_high(self) -> bool:
+        """
+        **Description**: Determines if RC switch is active high.
+
+        **Offset**: Bit 4 of 0x36
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_rc_kill_switch(self) -> bool:
+        """
+        **Description**: Indicates if RC is mapped as a kill switch.
+
+        **Offset**: Bit 4 of 0x5D
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_rc_limit_switch_forward(self) -> bool:
+        """
+        **Description**: Indicates if RC is used as a forward limit switch.
+
+        **Offset**: Bit 4 of 0x5F
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_rc_limit_switch_reverse(self) -> bool:
+        """
+        **Description**: Indicates if RC is used as a reverse limit switch.
+
+        **Offset**: Bit 4 of 0x60
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_invert_motor_direction(self) -> bool:
+        """
+        **Description**: Reverses the motor direction if set.
+
+        **Offset**: Bit 0 of 0x1B
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_max_speed(self) -> int:
+        """
+        **Description**: The default maximum motor speed, which can be overridden.
+
+        **Offset**: 0x47
+
+        **Type**: unsigned 32-bit
+
+        **Default**: 2000000
+
+        **Range**: 0 to 500000000
+
+        **Units**: microsteps per 10000 s
+        """
+        ...
+
+    def get_starting_speed(self) -> int:
+        """
+        **Description**: The default starting speed; instant acceleration/deceleration is allowed below this value.
+
+        **Offset**: 0x43
+
+        **Type**: unsigned 32-bit
+
+        **Default**: 0
+
+        **Range**: 0 to 500000000
+
+        **Units**: microsteps per 10000 s
+        """
+        ...
+
+    def get_max_acceleration(self) -> int:
+        """
+        **Description**: The default maximum acceleration; can be overridden at runtime.
+
+        **Offset**: 0x4F
+
+        **Type**: unsigned 32-bit
+
+        **Default**: 40000
+
+        **Range**: 100 to 2147483647
+
+        **Units**: microsteps per 100 s^2
+        """
+        ...
+
+    def get_max_deceleration(self) -> int:
+        """
+        **Description**: The default maximum deceleration. A value of 0 means the max acceleration is used;
+        values below 100 are treated as 100.
+
+        **Offset**: 0x4B
+
+        **Type**: unsigned 32-bit
+
+        **Default**: 0 (uses max accel)
+
+        **Range**: 100 to 2147483647
+
+        **Units**: microsteps per 100 s^2
+        """
+        ...
+
+    def get_step_mode(self) -> int:
+        """
+        **Description**: The default microstepping mode for settings. This value may be overridden at runtime.
+
+        **Offset**: 0x41
+
+        **Type**: unsigned 8-bit
+
+        **Data**:
+            0: Full step  
+            1: 1/2 step  
+            2: 1/4 step  
+            3: 1/8 step  
+            4: 1/16 step  
+            5: 1/32 step  
+            6: 1/2 step 100% (T249 only)  
+            7: 1/64 step  (36v4)  
+            8: 1/128 step (36v4)  
+            9: 1/256 step (36v4)
+
+        **Default**: 0 (Full step)
+        """
+        ...
+
+    def get_current_limit(self) -> int:
+        """
+        **Description**: The default coil current limit in driver-specific units.
+        
+        **Offset**: 0x40
+
+        **Type**: unsigned 8-bit
+        """
+        ...
+
+    def get_decay_mode(self) -> int:
+        """
+        **Description**: The default decay mode for non-HP Tics; not used for Tic 36v4.
+
+        **Offset**: 0x42
+
+        **Type**: unsigned 8-bit
+
+        **Data**:
+            Tic T500: 0 = Automatic  
+            Tic T825: 0 = Mixed, 1 = Slow, 2 = Fast  
+            Tic T834: 0 = Mixed 50%, 1 = Slow, 2 = Fast, 3 = Mixed 25%, 4 = Mixed 75%  
+            Tic T249: 0 = Mixed
+
+        **Default**: 0
+        """
+        ...
+
+    def get_auto_homing(self) -> bool:
+        """
+        **Description**: Enables automatic homing when the position is uncertain.
+
+        **Offset**: Bit 1 of byte 0x02
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_auto_homing_forward(self) -> bool:
+        """
+        **Description**: Determines if automatic homing is performed in the forward direction.
+
+        **Offset**: Bit 2 of byte 0x02
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_homing_speed_towards(self) -> int:
+        """
+        **Description**: The speed used when homing toward the limit switch.
+
+        **Offset**: 0x61
+
+        **Type**: unsigned 32-bit
+
+        **Default**: 1000000
+
+        **Range**: 0 to 500000000
+
+        **Units**: microsteps per 10000 s
+        """
+        ...
+
+    def get_homing_speed_away(self) -> int:
+        """
+        **Description**: The speed used briefly when homing away from the limit switch.
+
+        **Offset**: 0x65
+
+        **Type**: unsigned 32-bit
+
+        **Default**: 1000000
+
+        **Range**: 0 to 500000000
+
+        **Units**: microsteps per 10000 s
+        """
+        ...
+
+    def get_agc_mode(self) -> int:
+        """
+        **Description**: The default AGC mode for Tic T249.
+
+        **Offset**: 0x6C
+
+        **Type**: unsigned 8-bit
+
+        **Data**:
+            0: Off  
+            1: On  
+            2: Active off
+
+        **Default**: 0 (Off)
+        """
+        ...
+
+    def get_agc_bottom_current_limit(self) -> int:
+        """
+        **Description**: The default AGC bottom current limit for Tic T249.
+
+        **Offset**: 0x6D
+
+        **Type**: unsigned 8-bit
+
+        **Data**:
+            0: 45%  
+            1: 50%  
+            2: 55%  
+            3: 60%  
+            4: 65%  
+            5: 70%  
+            6: 75%  
+            7: 80%
+
+        **Default**: 7 (80%)
+        """
+        ...
+
+    def get_agc_current_boost_steps(self) -> int:
+        """
+        **Description**: The default AGC current boost steps for Tic T249.
+
+        **Offset**: 0x6E
+
+        **Type**: unsigned 8-bit
+
+        **Data**:
+            0: 5 steps  
+            1: 7 steps  
+            2: 9 steps  
+            3: 11 steps
+
+        **Default**: 0 (5 steps)
+        """
+        ...
+
+    def get_agc_frequency_limit(self) -> int:
+        """
+        **Description**: The default AGC frequency limit for Tic T249.
+
+        **Offset**: 0x6F
+
+        **Type**: unsigned 8-bit
+
+        **Data**:
+            0: Off  
+            1: 225 Hz  
+            2: 450 Hz  
+            3: 675 Hz
+
+        **Default**: 0 (Off)
+        """
+        ...
+
+    def get_hp_enable_unrestricted_current_limits(self) -> bool:
+        """
+        **Description**: Enables current limits above ~4000 mA on Tic 36v4 if set.
+
+        **Offset**: Bit 0 of byte 0x6C
+
+        **Type**: boolean
+
+        **Default**: false
+        """
+        ...
+
+    def get_hp_fixed_off_time(self) -> int:
+        """
+        **Description**: "Fixed off time" for the DRV8711-based driver on Tic 36v4.
+
+        **Offset**: 0xF6
+
+        **Type**: unsigned 8-bit
+
+        **Default**: 25.5 us
+
+        **Range**: 0.5 us to 128.0 us
+        """
+        ...
+
+    def get_hp_current_trip_blanking_time(self) -> int:
+        """
+        **Description**: Minimum on-time for each PWM cycle on Tic 36v4.
+
+        **Offset**: 0xF8
+
+        **Type**: unsigned 8-bit
+
+        **Default**: 1.00 us
+
+        **Range**: 1.00 us to 5.10 us
+        """
+        ...
+
+    def get_hp_enable_adaptive_blanking_time(self) -> bool:
+        """
+        **Description**: Enables adaptive blanking time on Tic 36v4 for low-current steps.
+
+        **Offset**: Bit 0 of byte 0xF9
+
+        **Type**: boolean
+
+        **Default**: true
+        """
+        ...
+
+    def get_hp_mixed_decay_transition_time(self) -> int:
+        """
+        **Description**: Time after which the driver on Tic 36v4 switches from fast to slow decay in mixed mode.
+
+        **Offset**: 0xFA
+
+        **Type**: unsigned 8-bit
+
+        **Default**: 8.0 us
+
+        **Range**: 0.0 us to 127.5 us
+        """
+        ...
+
+    def get_hp_decay_mode(self) -> int:
+        """
+        **Description**: The decay mode for high-power Tic 36v4.
+
+        **Offset**: 0xFB
+
+        **Type**: unsigned 8-bit
+        """
+        ...
+
+
+#
+# TicBase merges commands, variable getters, and settings.
 #
 class TicBase:
     """
-    Base class for Pololu Tic controllers. Dynamically defines:
-    - Commands (e.g. set_target_position)
-    - Variable getters (e.g. get_operation_state)
-    - Setting getters (e.g. get_control_mode)
+    **Description**: Base class for Pololu Tic controllers.
+    Dynamically defines:
+      - Commands (e.g. `set_target_position`)
+      - Variable getters (e.g. `get_operation_state`)
+      - Setting getters (e.g. `get_control_mode`)
     """
+
+    settings: Settings
 
     def __init__(self) -> None: ...
 
-    def _send_command(self, command_code: int, format: str,
-                      value: Optional[int] = None) -> None: ...
+    def _send_command(self, command_code: int, format: str, value: Optional[int] = None) -> None: ...
     def _block_read(self, command_code: int, offset: int, length: int,
                     format_response: Any = None) -> Any: ...
     def _define_commands(self) -> None: ...
@@ -129,7 +1353,7 @@ class TicBase:
 
     def get_variables(self) -> Dict[str, Any]:
         """
-        Returns a dictionary of all Tic variables (name -> value).
+        **Description**: Returns a dictionary mapping each variable name to its value.
         """
         ...
 
@@ -140,1957 +1364,875 @@ class TicBase:
     #
     def set_target_position(self, value: int) -> None:
         """
-        Command: 0xE0
+        **Description**: Sets the Tic's target position in microsteps.
+        If control mode is Serial/I2C/USB, the motor moves to the specified position.
+        Otherwise, the command is silently ignored.
 
-        Format: 32-bit write
+        **Command**: 0xE0
 
-        Data: target position, signed 32-bit
+        **Format**: 32-bit write
 
-        Range: -2,147,483,648 to +2,147,483,647
+        **Data**: target position, signed 32-bit
 
-        Units: microsteps
+        **Range**: -2,147,483,648 to +2,147,483,647
 
-        This sets the Tic's target position in microsteps.
-        If control mode is Serial/I2C/USB, it moves the motor accordingly.
-        Otherwise, silently ignored.
+        **Units**: microsteps
         """
         ...
 
     def set_target_velocity(self, value: int) -> None:
         """
-        Command: 0xE3
+        **Description**: Sets the Tic's target velocity.
+        If control mode is Serial/I2C/USB, the motor accelerates or decelerates to reach this velocity.
 
-        Format: 32-bit write
+        **Command**: 0xE3
 
-        Data: target velocity, signed 32-bit
+        **Format**: 32-bit write
 
-        Range: -500,000,000 to +500,000,000
+        **Data**: target velocity, signed 32-bit
 
-        Units: microsteps per 10,000 s
+        **Range**: -500,000,000 to +500,000,000
 
-        This sets the Tic's target velocity. If control mode = Serial/I2C/USB,
-        the motor accelerates or decelerates to that velocity.
+        **Units**: microsteps per 10,000 s
         """
         ...
 
     def halt_and_set_position(self, value: int) -> None:
         """
-        Command: 0xEC
+        **Description**: Abruptly halts the motor (ignoring deceleration) and sets the 'Current position'.
+        Also clears the 'position uncertain' flag, sets input state to 'halt', and clears 'input after scaling'.
 
-        Format: 32-bit write
+        **Command**: 0xEC
 
-        Data: current position, signed 32-bit
+        **Format**: 32-bit write
 
-        Range: -2,147,483,648 to +2,147,483,647
+        **Data**: current position, signed 32-bit
 
-        Units: microsteps
+        **Range**: -2,147,483,648 to +2,147,483,647
 
-        Abruptly halts the motor (ignoring deceleration) and sets 'Current position'.
-        Clears 'position uncertain', sets input state to 'halt', clears 'input after scaling'.
+        **Units**: microsteps
         """
         ...
 
     def halt_and_hold(self) -> None:
         """
-        Command: 0x89
+        **Description**: Abruptly stops the motor, sets 'position uncertain' and input state to 'halt',
+        and clears the 'input after scaling' variable.
 
-        Format: Quick
+        **Command**: 0x89
 
-        Abruptly halts the motor, sets 'position uncertain' = True, input state = 'halt',
-        and clears 'input after scaling'.
+        **Format**: Quick
         """
         ...
 
     def go_home(self, value: int) -> None:
         """
-        Command: 0x97
+        **Description**: Initiates the homing procedure in the specified direction.
 
-        Format: 7-bit write
+        **Command**: 0x97
 
-        Data:
-          0 = Home in reverse direction
-          1 = Home in forward direction
+        **Format**: 7-bit write
 
-        Starts the homing procedure in the chosen direction.
+        **Data**:
+            0: Home in reverse direction  
+            1: Home in forward direction
         """
         ...
 
     def reset_command_timeout(self) -> None:
         """
-        Command: 0x8C
+        **Description**: Resets the command timeout to prevent 'command timeout' errors.
 
-        Format: Quick
+        **Command**: 0x8C
 
-        Resets the command timeout to prevent 'command timeout' errors.
+        **Format**: Quick
         """
         ...
 
     def deenergize(self) -> None:
         """
-        Command: 0x86
+        **Description**: Disables the driver, de-energizing the motor coils.
+        Sets the 'position uncertain' flag and the 'intentionally de-energized' error bit.
+        
+        **Command**: 0x86
 
-        Format: Quick
-
-        Disables the driver, de-energizing coils. Sets 'position uncertain'
-        and 'intentionally de-energized' error bit.
+        **Format**: Quick
         """
         ...
 
     def energize(self) -> None:
         """
-        Command: 0x85
+        **Description**: Requests enabling the stepper driver and energizing the motor coils.
+        Clears the 'intentionally de-energized' error bit if no other errors exist.
+        
+        **Command**: 0x85
 
-        Format: Quick
-
-        Requests enabling the stepper driver if no other errors exist,
-        clearing 'intentionally de-energized'.
+        **Format**: Quick
         """
         ...
 
     def exit_safe_start(self) -> None:
         """
-        Command: 0x83
+        **Description**: Clears the 'safe start violation' error for approximately 200 ms,
+        allowing the motor to resume if control mode is Serial/I2C/USB.
+        
+        **Command**: 0x83
 
-        Format: Quick
-
-        Clears the 'safe start violation' error for ~200 ms (if control mode = Serial/I2C/USB).
+        **Format**: Quick
         """
         ...
 
     def enter_safe_start(self) -> None:
         """
-        Command: 0x8F
+        **Description**: Triggers safe start; if enabled, stops the motor using the soft error response.
 
-        Format: Quick
+        **Command**: 0x8F
 
-        Triggers safe start if enabled, halting motor with the soft error response.
+        **Format**: Quick
         """
         ...
 
     def reset(self) -> None:
         """
-        Command: 0xB0
+        **Description**: Reloads settings from non-volatile memory, abruptly halts the motor,
+        resets the driver, clears errors, and enters safe start if configured.
+        (Note: This is not a full microcontroller reset; uptime is unaffected.)
 
-        Format: Quick
+        **Command**: 0xB0
 
-        Reloads settings from non-volatile memory, abruptly halts motor,
-        resets driver, clears certain errors, enters safe start if configured.
-        Not a full microcontroller reset (uptime unaffected).
+        **Format**: Quick
         """
         ...
 
     def clear_driver_error(self) -> None:
         """
-        Command: 0x8A
+        **Description**: Clears a latched motor driver error if 'auto_clear_driver_error' is disabled.
+        Otherwise, it has no effect.
 
-        Format: Quick
+        **Command**: 0x8A
 
-        Clears a latched driver error if 'auto_clear_driver_error' is off.
-        Otherwise, no effect.
+        **Format**: Quick
         """
         ...
 
     def set_max_speed(self, value: int) -> None:
         """
-        Command: 0xE6
+        **Description**: Temporarily sets the maximum allowed motor speed.
 
-        Format: 32-bit write
+        **Command**: 0xE6
 
-        Data: max speed, unsigned 32-bit
+        **Format**: 32-bit write
 
-        Range: 0 to 500,000,000
+        **Data**: max speed, unsigned 32-bit
 
-        Units: microsteps per 10,000 s
+        **Range**: 0 to 500,000,000
 
-        Temporarily sets the Tic's maximum allowed speed (until reset or reinitialize).
+        **Units**: microsteps per 10,000 s
         """
         ...
 
     def set_starting_speed(self, value: int) -> None:
         """
-        Command: 0xE5
+        **Description**: Temporarily sets the starting speed (the speed below which instant
+        acceleration/deceleration is allowed).
 
-        Format: 32-bit write
+        **Command**: 0xE5
 
-        Data: starting speed, unsigned 32-bit
+        **Format**: 32-bit write
 
-        Range: 0 to 500,000,000
+        **Data**: starting speed, unsigned 32-bit
 
-        Units: microsteps per 10,000 s
+        **Range**: 0 to 500,000,000
 
-        Sets the speed below which instant acceleration/deceleration is allowed,
-        overriding the default until reset.
+        **Units**: microsteps per 10,000 s
         """
         ...
 
     def set_max_acceleration(self, value: int) -> None:
         """
-        Command: 0xEA
+        **Description**: Temporarily sets the maximum allowed acceleration.
+        If the provided value is less than 100, it is treated as 100.
 
-        Format: 32-bit write
+        **Command**: 0xEA
 
-        Data: max acceleration, unsigned 32-bit
+        **Format**: 32-bit write
 
-        Range: 100 to 2,147,483,647
+        **Data**: max acceleration, unsigned 32-bit
 
-        Units: microsteps per 100 s^2
+        **Range**: 100 to 2,147,483,647
 
-        Temporarily sets the Tic's max acceleration until reset.
-        If <100, it is treated as 100.
+        **Units**: microsteps per 100 s^2
         """
         ...
 
     def set_max_deceleration(self, value: int) -> None:
         """
-        Command: 0xE9
+        **Description**: Temporarily sets the maximum allowed deceleration.
+        If 0, it is set equal to the current max acceleration; values below 100 are treated as 100.
 
-        Format: 32-bit write
+        **Command**: 0xE9
 
-        Data: max deceleration, unsigned 32-bit
+        **Format**: 32-bit write
 
-        Range: 100 to 2,147,483,647
+        **Data**: max deceleration, unsigned 32-bit
 
-        Units: microsteps per 100 s^2
+        **Range**: 100 to 2,147,483,647
 
-        Temporarily sets the Tic's max deceleration until reset.
-        If 0, it is set = current max acceleration.
-        If <100, it is treated as 100.
+        **Units**: microsteps per 100 s^2
         """
         ...
 
     def set_step_mode(self, value: int) -> None:
         """
-        Command: 0x94
+        **Description**: Temporarily sets the microstepping mode.
 
-        Format: 7-bit write
+        **Command**: 0x94
 
-        Data: step mode, unsigned 7-bit
+        **Format**: 7-bit write
 
-        0: Full step
-        1: 1/2 step
-        2: 1/4 step
-        3: 1/8 step
-        4: 1/16 step (T834, T825, 36v4)
-        5: 1/32 step (T834, T825, 36v4)
-        6: 1/2 step 100% (T249)
-        7: 1/64 (36v4)
-        8: 1/128 (36v4)
-        9: 1/256 (36v4)
+        **Data**: step mode, unsigned 7-bit
 
-        Temporarily sets the microstepping mode until reset or reinit.
+        **Data Options**:
+            0: Full step  
+            1: 1/2 step  
+            2: 1/4 step  
+            3: 1/8 step  
+            4: 1/16 step (Tic T834, Tic T825, and Tic 36v4 only)  
+            5: 1/32 step (Tic T834, Tic T825, and Tic 36v4 only)  
+            6: 1/2 step 100% (Tic T249 only)  
+            7: 1/64 step (Tic 36v4 only)  
+            8: 1/128 step (Tic 36v4 only)  
+            9: 1/256 step (Tic 36v4 only)
         """
         ...
 
     def set_current_limit(self, value: int) -> None:
         """
-        Command: 0x91
+        **Description**: Temporarily sets the coil current limit.
+        The value is a 7-bit unsigned integer whose meaning depends on the Tic model.
 
-        Format: 7-bit write
+        **Command**: 0x91
 
-        Data: current limit, unsigned 7-bit
-        (range depends on Tic model, typically in mA)
+        **Format**: 7-bit write
 
-        Temporarily sets coil current limit until reset.
+        **Data**: current limit (in model-specific units, typically mA)
         """
         ...
 
     def set_decay_mode(self, value: int) -> None:
         """
-        Command: 0x92
+        **Description**: Temporarily sets the driver decay mode.
+        (Note: This has no effect on Tic 36v4.)
 
-        Format: 7-bit write
+        **Command**: 0x92
 
-        Data: decay mode, unsigned 7-bit
+        **Format**: 7-bit write
 
-        Examples:
-          Tic T500: 0=Automatic
-          Tic T834: 0=Mixed50%,1=Slow,2=Fast,3=Mixed25%,4=Mixed75%
-          Tic T825: 0=Mixed,1=Slow,2=Fast
-          Tic T249: 0=Mixed
+        **Data**: decay mode, unsigned 7-bit
 
-        Temporarily sets driver decay mode (no effect on 36v4).
+        **Data Options**:
+            Tic T500: 0 = Automatic  
+            Tic T834: 0 = Mixed 50%, 1 = Slow, 2 = Fast, 3 = Mixed 25%, 4 = Mixed 75%  
+            Tic T825: 0 = Mixed, 1 = Slow, 2 = Fast  
+            Tic T249: 0 = Mixed
         """
         ...
 
     def set_agc_option(self, value: int) -> None:
         """
-        Command: 0x98
+        **Description**: Temporarily changes an AGC option (only valid on Tic T249).
+        The upper 3 bits specify which AGC option; the lower 4 bits specify the new value.
 
-        Format: 7-bit write
+        **Command**: 0x98
 
-        Data: upper 3 bits = AGC option, lower 4 bits = new value
-             0=AGC mode
-             1=AGC bottom current limit
-             2=AGC current boost steps
-             3=AGC frequency limit
+        **Format**: 7-bit write
 
-        Valid only on Tic T249. Temporarily changes AGC config until reset.
+        **Data**: upper 3 bits = AGC option, lower 4 bits = new value
         """
         ...
 
     #
-    # --------------------------------
-    # Variable stubs 
-    # --------------------------------
+    # ---------------------------
+    # Variable stubs (real-time variables)
+    # ---------------------------
     #
     def get_operation_state(self) -> int:
         """
-        Offset: 0x00
+        **Description**: Returns the Tic's current operation state.
 
-        Type: unsigned 8-bit
+        **Offset**: 0x00
 
-        Describes the Tic's high-level operation state (Section 5.4).
+        **Type**: unsigned 8-bit
 
         Possible values:
-          0=Reset,2=De-energized,4=Soft error,6=Wait ERR,
-          8=Starting up,10=Normal
+            0: Reset  
+            2: De-energized  
+            4: Soft error  
+            6: Waiting for ERR line  
+            8: Starting up  
+            10: Normal
         """
         ...
 
     def get_misc_flags(self) -> int:
         """
-        Offset: 0x01
+        **Description**: Returns a bitmask of additional status flags.
 
-        Type: unsigned 8-bit
+        **Offset**: 0x01
 
-        Bitmask for additional status:
-          Bit0=Energized,Bit1=Position uncertain,
-          Bit2=Forward limit,Bit3=Reverse limit,
-          Bit4=Homing active
+        **Type**: unsigned 8-bit
+
+        Bits:
+            Bit 0: Energized  
+            Bit 1: Position uncertain  
+            Bit 2: Forward limit active  
+            Bit 3: Reverse limit active  
+            Bit 4: Homing active
         """
         ...
 
     def get_error_status(self) -> int:
         """
-        Offset: 0x02
+        **Description**: Returns a bitmask of errors currently stopping the motor.
 
-        Type: unsigned 16-bit
+        **Offset**: 0x02
 
-        Errors currently stopping motor (bitmask).
-          Bit0=Intentionally de-energized,
-          Bit1=Motor driver error,
-          Bit2=Low VIN,
-          Bit3=Kill switch,
-          Bit4=Input invalid,
-          Bit5=Serial error,
-          Bit6=Command timeout,
-          Bit7=Safe start violation,
-          Bit8=ERR line high
+        **Type**: unsigned 16-bit
+
+        Bits:
+            Bit 0: Intentionally de-energized  
+            Bit 1: Motor driver error  
+            Bit 2: Low VIN  
+            Bit 3: Kill switch active  
+            Bit 4: Required input invalid  
+            Bit 5: Serial error  
+            Bit 6: Command timeout  
+            Bit 7: Safe start violation  
+            Bit 8: ERR line high
         """
         ...
 
     def get_error_occured(self) -> int:
         """
-        Offset: 0x04
+        **Description**: Returns a bitmask of errors that have occurred since the last clear.
+        
+        **Offset**: 0x04
 
-        Type: unsigned 32-bit
+        **Type**: unsigned 32-bit
 
-        Bitmask of all errors that have occurred since last clear,
-        including bits for framing, overrun, CRC, etc.
+        Includes additional bits for serial framing, overrun, CRC, etc.
         """
         ...
 
     def get_planning_mode(self) -> int:
         """
-        Offset: 0x09
+        **Description**: Returns the current step planning mode.
 
-        Type: unsigned 8-bit
+        **Offset**: 0x09
 
-        0=Off,1=Target position,2=Target velocity
+        **Type**: unsigned 8-bit
+
+        Data:
+            0: Off (no target)  
+            1: Target position  
+            2: Target velocity
         """
         ...
 
     def get_target_position(self) -> int:
         """
-        Offset: 0x0A
+        **Description**: Returns the motor's target position (only valid if planning mode is Target position).
 
-        Type: signed 32-bit
+        **Offset**: 0x0A
 
-        Range: -2,147,483,648 to +2,147,483,647
+        **Type**: signed 32-bit
 
-        Units: microsteps
+        **Range**: -2,147,483,648 to +2,147,483,647
 
-        If planning mode=Target position, this is the commanded position.
+        **Units**: microsteps
         """
         ...
 
     def get_target_velocity(self) -> int:
         """
-        Offset: 0x0E
+        **Description**: Returns the motor's target velocity (only valid if planning mode is Target velocity).
 
-        Type: signed 32-bit
+        **Offset**: 0x0E
 
-        Range: -500,000,000 to +500,000,000
+        **Type**: signed 32-bit
 
-        Units: microsteps per 10,000 s
+        **Range**: -500,000,000 to +500,000,000
 
-        If planning mode=Target velocity, this is the commanded velocity.
+        **Units**: microsteps per 10,000 s
         """
         ...
 
     def get_starting_speed(self) -> int:
         """
-        Offset: 0x12
+        **Description**: Returns the starting speed—the maximum speed at which instant acceleration is allowed.
 
-        Type: unsigned 32-bit
+        **Offset**: 0x12
 
-        Range: 0 to 500,000,000
+        **Type**: unsigned 32-bit
 
-        Units: microsteps per 10,000 s
+        **Range**: 0 to 500,000,000
 
-        The speed below which instant acceleration is allowed.
+        **Units**: microsteps per 10,000 s
         """
         ...
 
     def get_max_speed(self) -> int:
         """
-        Offset: 0x16
+        **Description**: Returns the maximum allowed motor speed.
 
-        Type: unsigned 32-bit
+        **Offset**: 0x16
 
-        Range: 0 to 500,000,000
+        **Type**: unsigned 32-bit
 
-        Units: microsteps per 10,000 s
+        **Range**: 0 to 500,000,000
 
-        The Tic's maximum allowed speed.
+        **Units**: microsteps per 10,000 s
         """
         ...
 
     def get_max_deceleration(self) -> int:
         """
-        Offset: 0x1A
+        **Description**: Returns the maximum allowed deceleration.
 
-        Type: unsigned 32-bit
+        **Offset**: 0x1A
 
-        Range: 100 to 2,147,483,647
+        **Type**: unsigned 32-bit
 
-        Units: microsteps per 100 s^2
+        **Range**: 100 to 2,147,483,647
 
-        The Tic's maximum allowed deceleration.
+        **Units**: microsteps per 100 s^2
         """
         ...
 
     def get_max_acceleration(self) -> int:
         """
-        Offset: 0x1E
+        **Description**: Returns the maximum allowed acceleration.
 
-        Type: unsigned 32-bit
+        **Offset**: 0x1E
 
-        Range: 100 to 2,147,483,647
+        **Type**: unsigned 32-bit
 
-        Units: microsteps per 100 s^2
+        **Range**: 100 to 2,147,483,647
 
-        The Tic's maximum allowed acceleration.
+        **Units**: microsteps per 100 s^2
         """
         ...
 
     def get_current_position(self) -> int:
         """
-        Offset: 0x22
+        **Description**: Returns the current position (accumulated commanded steps).
 
-        Type: signed 32-bit
+        **Offset**: 0x22
 
-        Range: -2,147,483,648 to +2,147,483,647
+        **Type**: signed 32-bit
 
-        Units: microsteps
+        **Range**: -2,147,483,648 to +2,147,483,647
 
-        The current position (accumulated commanded steps).
+        **Units**: microsteps
         """
         ...
 
     def get_current_velocity(self) -> int:
         """
-        Offset: 0x26
+        **Description**: Returns the current commanded velocity.
 
-        Type: signed 32-bit
+        **Offset**: 0x26
 
-        Range: -500,000,000 to +500,000,000
+        **Type**: signed 32-bit
 
-        Units: microsteps per 10,000 s
+        **Range**: -500,000,000 to +500,000,000
 
-        The current commanded velocity.
+        **Units**: microsteps per 10,000 s
         """
         ...
 
     def get_acting_target_position(self) -> int:
         """
-        Offset: 0x2A
+        **Description**: Returns an internal variable used in target-position step planning.
 
-        Type: signed 32-bit
+        **Offset**: 0x2A
 
-        Units: microsteps
+        **Type**: signed 32-bit
 
-        Internal variable used in target position step planning.
+        **Units**: microsteps
         """
         ...
 
     def get_time_since_last_step(self) -> int:
         """
-        Offset: 0x2E
+        **Description**: Returns the time since the last step (used for planning).
 
-        Type: unsigned 32-bit
+        **Offset**: 0x2E
 
-        Units: 1/3 microseconds
+        **Type**: unsigned 32-bit
 
-        Internal timer for step planning.
+        **Units**: 1/3 microseconds
         """
         ...
 
     def get_device_reset(self) -> int:
         """
-        Offset: 0x32
+        **Description**: Returns the cause of the last full microcontroller reset.
 
-        Type: unsigned 8-bit
+        **Offset**: 0x32
 
-        Last full microcontroller reset cause:
-          0=Power up,1=Brown-out,2=Ext reset,
-          4=Watchdog,8=Software,16=Stack overflow,32=Stack underflow
+        **Type**: unsigned 8-bit
+
+        Possible values:
+            0: Power up  
+            1: Brown-out reset  
+            2: External reset  
+            4: Watchdog timer reset  
+            8: Software reset  
+            16: Stack overflow  
+            32: Stack underflow
         """
         ...
 
     def get_vin_voltage(self) -> int:
         """
-        Offset: 0x33
+        **Description**: Returns the measured VIN voltage.
 
-        Type: unsigned 16-bit
+        **Offset**: 0x33
 
-        Units: millivolts
+        **Type**: unsigned 16-bit
 
-        The measured VIN voltage.
+        **Units**: millivolts
         """
         ...
 
     def get_uptime(self) -> int:
         """
-        Offset: 0x35
+        **Description**: Returns the time since the last full microcontroller reset.
+        (Note: This value is not affected by a 'reset' command.)
+        
+        **Offset**: 0x35
 
-        Type: unsigned 32-bit
+        **Type**: unsigned 32-bit
 
-        Units: milliseconds
-
-        Time since the controller's last full reset (not changed by 'reset' command).
+        **Units**: milliseconds
         """
         ...
 
     def get_encoder_position(self) -> int:
         """
-        Offset: 0x39
+        **Description**: Returns the raw quadrature encoder count from the TX/RX pins.
 
-        Type: signed 32-bit
+        **Offset**: 0x39
 
-        Units: encoder ticks
+        **Type**: signed 32-bit
 
-        Raw quadrature encoder count from TX/RX pins.
+        **Units**: ticks
         """
         ...
 
     def get_rc_pulse(self) -> int:
         """
-        Offset: 0x3D
+        **Description**: Returns the measured RC pulse width.
+        A value of 0xFFFF indicates an invalid reading.
 
-        Type: unsigned 16-bit
+        **Offset**: 0x3D
 
-        Units: 1/12 microseconds
+        **Type**: unsigned 16-bit
 
-        The measured width of the RC pulse. 0xFFFF if invalid.
+        **Units**: 1/12 microseconds
         """
         ...
 
     def get_analog_reading_scl(self) -> int:
         """
-        Offset: 0x3F
+        **Description**: Returns the analog reading from SCL if enabled.
+        A value of 0xFFFF indicates unavailability.
 
-        Type: unsigned 16-bit
+        **Offset**: 0x3F
 
-        Default: not applicable
+        **Type**: unsigned 16-bit
 
-        Range: 0 to 0xFFFE
+        **Range**: 0 to 0xFFFE
 
-        Units: ~0=0V, ~0xFFFE=5V
-
-        The analog reading on SCL if enabled. 0xFFFF if not available.
+        **Units**: ~0 = 0 V, ~0xFFFE ≈ 5 V
         """
         ...
 
     def get_analog_reading_sda(self) -> int:
         """
-        Offset: 0x41
+        **Description**: Returns the analog reading from SDA if enabled.
+        A value of 0xFFFF indicates unavailability.
 
-        Type: unsigned 16-bit
+        **Offset**: 0x41
 
-        Default: not applicable
+        **Type**: unsigned 16-bit
 
-        Range: 0 to 0xFFFE
+        **Range**: 0 to 0xFFFE
 
-        Units: ~0=0V, ~0xFFFE=5V
-
-        The analog reading on SDA if enabled. 0xFFFF if not available.
+        **Units**: ~0 = 0 V, ~0xFFFE ≈ 5 V
         """
         ...
 
     def get_analog_reading_tx(self) -> int:
         """
-        Offset: 0x43
+        **Description**: Returns the analog reading from TX if enabled.
+        A value of 0xFFFF indicates unavailability.
 
-        Type: unsigned 16-bit
+        **Offset**: 0x43
 
-        Default: not applicable
+        **Type**: unsigned 16-bit
 
-        Range: 0 to 0xFFFE
+        **Range**: 0 to 0xFFFE
 
-        Units: ~0=0V, ~0xFFFE=5V
-
-        The analog reading on TX if enabled. 0xFFFF if not available.
+        **Units**: ~0 = 0 V, ~0xFFFE ≈ 5 V
         """
         ...
 
     def get_analog_reading_rx(self) -> int:
         """
-        Offset: 0x45
+        **Description**: Returns the analog reading from RX if enabled.
+        A value of 0xFFFF indicates unavailability.
 
-        Type: unsigned 16-bit
+        **Offset**: 0x45
 
-        Default: not applicable
+        **Type**: unsigned 16-bit
 
-        Range: 0 to 0xFFFE
+        **Range**: 0 to 0xFFFE
 
-        Units: ~0=0V, ~0xFFFE=5V
-
-        The analog reading on RX if enabled. 0xFFFF if not available.
+        **Units**: ~0 = 0 V, ~0xFFFE ≈ 5 V
         """
         ...
 
     def get_digital_readings(self) -> int:
         """
-        Offset: 0x47
+        **Description**: Returns a bitmask of digital readings from the control pins.
 
-        Type: unsigned 8-bit
+        **Offset**: 0x47
 
-        Bitmask of digital reads:
-          Bit0=SCL,Bit1=SDA,Bit2=TX,Bit3=RX,Bit4=RC
+        **Type**: unsigned 8-bit
+
+        Bits:
+            Bit 0: SCL  
+            Bit 1: SDA  
+            Bit 2: TX  
+            Bit 3: RX  
+            Bit 4: RC
         """
         ...
 
     def get_pin_states(self) -> int:
         """
-        Offset: 0x48
+        **Description**: Returns the state of the control pins.
+        Each pair of bits represents the state:
+            0: High impedance  
+            1: Pulled up  
+            2: Output low  
+            3: Output high
 
-        Type: unsigned 8-bit
+        **Offset**: 0x48
 
-        Each pair of bits = pin state:
-          0=Hi-Z,1=Pullup,2=Low,3=High
-        Groups: [0..1]=SCL,[2..3]=SDA,[4..5]=TX,[6..7]=RX
+        **Type**: unsigned 8-bit
         """
         ...
 
     def get_step_mode(self) -> int:
         """
-        Offset: 0x49
+        **Description**: Returns the current driver microstepping mode.
 
-        Type: unsigned 8-bit
+        **Offset**: 0x49
 
-        Current driver microstepping mode:
-          0=Full,1=1/2,2=1/4,3=1/8,4=1/16,
-          5=1/32,6=1/2(100%),7=1/64,8=1/128,9=1/256
+        **Type**: unsigned 8-bit
+
+        Data Options:
+            0: Full step  
+            1: 1/2 step  
+            2: 1/4 step  
+            3: 1/8 step  
+            4: 1/16 step  
+            5: 1/32 step  
+            6: 1/2 step 100%  
+            7: 1/64 step  
+            8: 1/128 step  
+            9: 1/256 step
         """
         ...
 
     def get_current_limit(self) -> int:
         """
-        Offset: 0x4A
+        **Description**: Returns the coil current limit in driver-specific units.
 
-        Type: unsigned 8-bit
+        **Offset**: 0x4A
 
-        The coil current limit in driver-specific units.
+        **Type**: unsigned 8-bit
         """
         ...
 
     def get_decay_mode(self) -> int:
         """
-        Offset: 0x4B
+        **Description**: Returns the driver decay mode.
+        (Note: This variable is not valid for Tic 36v4.)
 
-        Type: unsigned 8-bit
+        **Offset**: 0x4B
 
-        (Not valid for 36v4)
-
-        Driver decay mode if applicable (auto, mixed, slow, fast...).
+        **Type**: unsigned 8-bit
         """
         ...
 
     def get_input_state(self) -> int:
         """
-        Offset: 0x4C
+        **Description**: Returns the current input state.
 
-        Type: unsigned 8-bit
+        **Offset**: 0x4C
 
-        The main input state:
-          0=Not ready,1=Invalid,2=Halt,3=Target pos,4=Target velocity
+        **Type**: unsigned 8-bit
+
+        Possible states:
+            0: Not ready  
+            1: Invalid  
+            2: Halt  
+            3: Target position  
+            4: Target velocity
         """
         ...
 
     def get_input_after_averaging(self) -> int:
         """
-        Offset: 0x4D
+        **Description**: Returns the intermediate RC/analog reading after averaging.
+        A value of 0xFFFF indicates unavailability.
 
-        Type: unsigned 16-bit
+        **Offset**: 0x4D
 
-        Intermediate analog/RC reading after averaging. 0xFFFF if not available.
+        **Type**: unsigned 16-bit
         """
         ...
 
     def get_input_after_hysteresis(self) -> int:
         """
-        Offset: 0x4F
+        **Description**: Returns the intermediate reading after hysteresis.
+        A value of 0xFFFF indicates unavailability.
 
-        Type: unsigned 16-bit
+        **Offset**: 0x4F
 
-        Intermediate reading after hysteresis. 0xFFFF if not available.
+        **Type**: unsigned 16-bit
         """
         ...
 
     def get_input_after_scaling(self) -> int:
         """
-        Offset: 0x51
+        **Description**: Returns the final scaled input value (target position or velocity).
+        
+        **Offset**: 0x51
 
-        Type: signed 32-bit
-
-        The final scaled input value (target position or velocity).
+        **Type**: signed 32-bit
         """
         ...
 
     def get_last_motor_driver_error(self) -> int:
         """
-        Offset: 0x55
+        **Description**: Returns the cause of the last motor driver error (Tic T249 only).
 
-        Type: unsigned 8-bit
+        **Offset**: 0x55
 
-        (Tic T249 only)
+        **Type**: unsigned 8-bit
 
-        Last driver error cause:
-          0=None,1=Overcurrent,2=Overtemp
+        Data Options:
+            0: None  
+            1: Over-current  
+            2: Over-temperature
         """
         ...
 
     def get_agc_mode(self) -> int:
         """
-        Offset: 0x56
+        **Description**: Returns the current AGC mode (Tic T249 only).
 
-        Type: unsigned 8-bit
+        **Offset**: 0x56
 
-        (T249 only)
+        **Type**: unsigned 8-bit
 
-        The AGC mode: 0=Off,1=On,2=ActiveOff
+        Data Options:
+            0: Off  
+            1: On  
+            2: Active off
         """
         ...
 
     def get_agc_bottom_current_limit(self) -> int:
         """
-        Offset: 0x57
+        **Description**: Returns the AGC bottom current limit (Tic T249 only).
 
-        Type: unsigned 8-bit
+        **Offset**: 0x57
 
-        (T249 only)
+        **Type**: unsigned 8-bit
 
-        The bottom current limit: 0=45%,1=50%,2=55%,3=60%,4=65%,5=70%,6=75%,7=80%
+        Data Options:
+            0: 45%  
+            1: 50%  
+            2: 55%  
+            3: 60%  
+            4: 65%  
+            5: 70%  
+            6: 75%  
+            7: 80%
         """
         ...
 
     def get_agc_current_boost_steps(self) -> int:
         """
-        Offset: 0x58
+        **Description**: Returns the AGC current boost steps (Tic T249 only).
 
-        Type: unsigned 8-bit
+        **Offset**: 0x58
 
-        (T249 only)
+        **Type**: unsigned 8-bit
 
-        The AGC current boost steps: 0=5,1=7,2=9,3=11
+        Data Options:
+            0: 5 steps  
+            1: 7 steps  
+            2: 9 steps  
+            3: 11 steps
         """
         ...
 
     def get_agc_frequency_limit(self) -> int:
         """
-        Offset: 0x59
+        **Description**: Returns the AGC frequency limit (Tic T249 only).
 
-        Type: unsigned 8-bit
+        **Offset**: 0x6F
 
-        (T249 only)
+        **Type**: unsigned 8-bit
 
-        The AGC frequency limit: 0=Off,1=225Hz,2=450Hz,3=675Hz
+        Data Options:
+            0: Off  
+            1: 225 Hz  
+            2: 450 Hz  
+            3: 675 Hz
         """
         ...
 
     def get_last_hp_driver_errors(self) -> int:
         """
-        Offset: 0xFF
+        **Description**: Returns a bitmask indicating the cause(s) of the last high-power driver error (Tic 36v4 only).
 
-        Type: unsigned 8-bit
+        **Offset**: 0xFF
 
-        (36v4 only)
+        **Type**: unsigned 8-bit
 
-        Bitmask of last high-power driver errors:
-          Bit0=Overtemp,Bit1=OvercurrentA,Bit2=OvercurrentB,
-          Bit3=PredriverA,Bit4=PredriverB,Bit5=Undervoltage,
-          Bit7=Verification fail
+        Bits:
+            Bit 0: Overtemperature  
+            Bit 1: Overcurrent A  
+            Bit 2: Overcurrent B  
+            Bit 3: Predriver fault A  
+            Bit 4: Predriver fault B  
+            Bit 5: Undervoltage  
+            Bit 7: Verification failure
         """
-        ...
-
-
-
-class Settings:
-    """
-    Class used to manage the Tic's settings.
-    Dynamically adds get_<setting>() methods using partial().
-    """
-
-    def __init__(self, tic: Any) -> None:
-        """
-        For each setting in SETTINGS, sets an attribute 'get_<name>' that calls tic._block_read(...).
-        """
-        ...
-
-    def get_serial_device_number(self) -> int:
-        """
-        Gets the serial device number from two separate bytes in the Tic's settings.
-        """
-        ...
-
-    def get_serial_alt_device_number(self) -> int:
-        """
-        Gets the alternative serial device number from two separate bytes in the Tic's settings.
-        """
-        ...
-
-    def get_all(self) -> dict[str, Any]:
-        """
-        Returns all of the Tic's settings and their values.
-        """
-        ...
-
-    # Stubs for each get_<setting>() method with docstrings
-
-    def get_control_mode(self) -> int:
-        '''
-        Offset: 0x01
-
-        Type: unsigned 8-bit
-
-        Data:
-          0: Serial / I2C / USB
-          1: STEP/DIR
-          2: RC position
-          3: RC speed
-          4: Analog position
-          5: Analog speed
-          6: Encoder position
-          7: Encoder speed
-
-        Default: 0 (Serial / I2C / USB)
-
-        Determines the Tic's control mode. See Section 6 for details.
-        '''
-        ...
-
-    def get_disable_safe_start(self) -> bool:
-        '''
-        Offset: bit 0 of byte 0x03
-
-        Type: boolean
-
-        Default: false
-
-        If set, disables the safe start feature (Section 5.4).
-        '''
-        ...
-
-    def get_ignore_err_line_high(self) -> bool:
-        '''
-        Offset: bit 0 of byte 0x04
-
-        Type: boolean
-
-        Default: false
-
-        Disables the "ERR line high" error if set.
-        '''
-        ...
-
-    def get_auto_clear_driver_error(self) -> bool:
-        '''
-        Offset: bit 0 of byte 0x08
-
-        Type: boolean
-
-        Default: true
-
-        When enabled, the Tic will periodically clear latched motor driver errors (Section 5.4).
-        '''
-        ...
-
-    def get_never_sleep(self) -> bool:
-        '''
-        Offset: bit 0 of byte 0x02
-
-        Type: boolean
-
-        Default: false
-
-        Prevents the Tic from sleeping if USB power is present but VIN is not.
-        '''
-        ...
-
-    def get_vin_calibration(self) -> int:
-        '''
-        Offset: 0x14
-
-        Type: signed 16-bit
-
-        Default: 0
-        Range: -500 to +500
-
-        Adjusts the scaling of the Tic's VIN readings. Positive values increase VIN measurement,
-        negative values decrease it. Section 6 has more info on typical scale factors.
-        '''
-        ...
-
-    def get_soft_error_response(self) -> int:
-        '''
-        Offset: 0x53
-
-        Type: unsigned 8-bit
-
-        Data:
-          0: De-energize
-          1: Halt and hold
-          2: Decelerate to hold
-          3: Go to position
-
-        Default: 2 (Decelerate to hold)
-
-        Determines what the Tic does on a soft error (Section 5.4).
-        '''
-        ...
-
-    def get_soft_error_position(self) -> int:
-        '''
-        Offset: 0x54
-
-        Type: signed 32-bit
-
-        Default: 0
-        Range: -2,147,483,648 to 2,147,483,647
-
-        If "soft error response" is "Go to position", this is the position used.
-        '''
-        ...
-
-    def get_current_limit_during_error(self) -> int:
-        '''
-        Offset: 0x31
-
-        Type: unsigned 8-bit or 0xFF to disable
-
-        Default: 0
-        Range: 0 to normal current limit, or disabled
-
-        If not 0xFF, the Tic uses a different current limit when a soft error is active.
-        '''
-        ...
-
-    def get_serial_baud_rate(self) -> int:
-        '''
-        Offset: 0x06
-
-        Type: unsigned 16-bit
-
-        Default: 9600
-        Range: 200 to 115385 bps
-
-        The serial baud rate in bits per second. This corresponds to a "baud rate generator"
-        value internally. See Section 6 for details.
-        '''
-        ...
-
-    def get_serial_enable_alt_device_number(self) -> bool:
-        '''
-        Offset: bit 7 of byte 0x6A
-
-        Type: boolean
-
-        Default: false
-
-        If set, the Tic responds to an alternative Pololu Protocol device number in addition
-        to the main device number.
-        '''
-        ...
-
-    def get_serial_14bit_device_number(self) -> bool:
-        '''
-        Offset: bit 3 of byte 0x0B
-
-        Type: boolean
-
-        Default: false
-
-        Allows device numbers up to 16383 in Pololu Protocol commands (Section 9).
-        '''
-        ...
-
-    def get_serial_response_delay(self) -> int:
-        '''
-        Offset: 0x5E
-
-        Type: unsigned 8-bit
-
-        Default: 0
-        Range: 0 to 255 (microseconds)
-
-        Minimum amount of time to wait before sending a serial response or processing an I2C byte.
-        '''
-        ...
-
-    def get_serial_command_timeout(self) -> int:
-        '''
-        Offset: 0x09
-
-        Type: unsigned 16-bit
-
-        Default: 1000 ms
-        Range: 0 to 60000 ms
-
-        Timeout in ms before the Tic flags a "command timeout" error if no valid commands
-        have been received. 0 disables the feature.
-        '''
-        ...
-
-    def get_serial_crc_for_commands(self) -> bool:
-        '''
-        Offset: bit 0 of byte 0x0B
-
-        Type: boolean
-
-        Default: false
-
-        If set, the Tic requires a 7-bit CRC on every incoming serial command (Section 9).
-        '''
-        ...
-
-    def get_serial_crc_for_responses(self) -> bool:
-        '''
-        Offset: bit 1 of byte 0x0B
-
-        Type: boolean
-
-        Default: false
-
-        If set, the Tic appends a 7-bit CRC to its serial responses (up to 14 bytes).
-        '''
-        ...
-
-    def get_serial_7bit_responses(self) -> bool:
-        '''
-        Offset: bit 2 of byte 0x0B
-
-        Type: boolean
-
-        Default: false
-
-        If set, the Tic encodes its serial responses with 7-bit bytes only.
-        '''
-        ...
-
-    def get_encoder_prescaler(self) -> int:
-        '''
-        Offset: 0x58
-
-        Type: unsigned 32-bit
-
-        Default: 1
-        Range: 1 to 2,147,483,647
-
-        For encoder modes, sets how many encoder counts correspond to one unit of stepper movement.
-        '''
-        ...
-
-    def get_encoder_postscaler(self) -> int:
-        '''
-        Offset: 0x37
-
-        Type: unsigned 32-bit
-
-        Default: 1
-        Range: 1 to 2,147,483,647
-
-        For encoder modes, sets the size of each unit of stepper motor position/speed.
-        '''
-        ...
-
-    def get_encoder_unlimited(self) -> bool:
-        '''
-        Offset: bit 0 of 0x5C
-
-        Type: boolean
-
-        Default: false
-
-        Enables unbounded position control if set. See Section 5.3.
-        '''
-        ...
-
-    def get_input_averaging_enabled(self) -> bool:
-        '''
-        Offset: bit 0 of 0x2E
-
-        Type: boolean
-
-        Default: true
-
-        Enables averaging for RC/analog inputs (Section 5.2).
-        '''
-        ...
-
-    def get_input_hysteresis(self) -> int:
-        '''
-        Offset: 0x2F
-
-        Type: unsigned 16-bit
-
-        Default: 0
-        Range: 0 to 65535
-
-        Amount of hysteresis to apply to RC/analog inputs.
-        '''
-        ...
-
-    def get_input_invert(self) -> bool:
-        '''
-        Offset: 0x21
-
-        Type: boolean
-
-        Default: false
-
-        If true, inverts direction for RC/analog inputs (Section 5.2).
-        '''
-        ...
-
-    def get_input_max(self) -> int:
-        '''
-        Offset: 0x28
-
-        Type: unsigned 16-bit
-
-        Default: 4095
-        Range: 0 to 4095
-
-        One of the RC/analog input scaling parameters (Section 5.2).
-        '''
-        ...
-
-    def get_output_max(self) -> int:
-        '''
-        Offset: 0x32
-
-        Type: signed 32-bit
-
-        Default: 200
-        Range: 0 to 2,147,483,647
-
-        One of the RC/analog input scaling parameters (Section 5.2).
-        '''
-        ...
-
-    def get_input_neutral_max(self) -> int:
-        '''
-        Offset: 0x26
-
-        Type: unsigned 16-bit
-
-        Default: 2080
-        Range: 0 to 4095
-
-        One of the RC/analog input scaling parameters (neutral zone upper bound).
-        '''
-        ...
-
-    def get_input_neutral_min(self) -> int:
-        '''
-        Offset: 0x24
-
-        Type: unsigned 16-bit
-
-        Default: 2015
-        Range: 0 to 4095
-
-        One of the RC/analog input scaling parameters (neutral zone lower bound).
-        '''
-        ...
-
-    def get_input_min(self) -> int:
-        '''
-        Offset: 0x22
-
-        Type: unsigned 16-bit
-
-        Default: 0
-        Range: 0 to 4095
-
-        One of the RC/analog input scaling parameters.
-        '''
-        ...
-
-    def get_output_min(self) -> int:
-        '''
-        Offset: 0x2A
-
-        Type: signed 32-bit
-
-        Default: -200
-        Range: -2,147,483,647 to 0
-
-        One of the RC/analog input scaling parameters (target minimum).
-        '''
-        ...
-
-    def get_input_scaling_degree(self) -> int:
-        '''
-        Offset: 0x20
-
-        Type: unsigned 8-bit
-
-        Data:
-          0: linear
-          1: quadratic
-          2: cubic
-
-        Default: 0 (linear)
-
-        Determines polynomial degree for scaling RC/analog inputs (Section 5.2).
-        '''
-        ...
-
-    def get_scl_config(self) -> int:
-        '''
-        Offset: 0x3B
-
-        Type: 8-bit
-
-        Default: 0
-
-        Pin configuration for the SCL pin (I2C clock), including function, pull-up, analog mode, etc.
-        '''
-        ...
-
-    def get_scl_pin_function(self) -> int:
-        '''
-        Offset: 0x3B
-
-        Type: bits [0..3]
-
-        Default: 0
-
-        The pin function extracted from scl_config:
-          0 = Default
-          1 = User I/O
-          2 = User input
-          3 = Pot power
-          4 = SCL
-          7 = Kill switch
-          8 = Limit switch forward
-          9 = Limit switch reverse
-        '''
-        ...
-
-    def get_scl_enable_analog(self) -> bool:
-        '''
-        Offset: bit 6 of 0x3B
-
-        Type: boolean
-
-        Default: false
-        '''
-        ...
-
-    def get_scl_enable_pull_up(self) -> bool:
-        '''
-        Offset: bit 7 of 0x3B
-
-        Type: boolean
-
-        Default: false
-        '''
-        ...
-
-    def get_scl_active_high(self) -> bool:
-        '''
-        Offset: bit 0 of 0x36
-
-        Type: boolean
-
-        Default: false
-
-        If the SCL pin is a switch, determines if it is active high.
-        '''
-        ...
-
-    def get_scl_kill_switch(self) -> bool:
-        '''
-        Offset: bit 0 of 0x5D
-
-        Type: boolean
-
-        Default: false
-
-        If set, the SCL pin is mapped as a kill switch.
-        '''
-        ...
-
-    def get_scl_limit_switch_forward(self) -> bool:
-        '''
-        Offset: bit 0 of 0x5F
-
-        Type: boolean
-
-        Default: false
-
-        If set, the SCL pin is mapped as a forward limit switch.
-        '''
-        ...
-
-    def get_scl_limit_switch_reverse(self) -> bool:
-        '''
-        Offset: bit 0 of 0x60
-
-        Type: boolean
-
-        Default: false
-
-        If set, the SCL pin is mapped as a reverse limit switch.
-        '''
-        ...
-
-    def get_sda_config(self) -> int:
-        '''
-        Offset: 0x3C
-
-        Type: 8-bit
-
-        Default: 0
-
-        Pin configuration for the SDA pin (I2C data line).
-        '''
-        ...
-
-    def get_sda_pin_function(self) -> int:
-        '''
-        Offset: 0x3C
-
-        Type: bits [0..3]
-
-        Default: 0
-
-        Pin function for the SDA pin. See doc for values.
-        '''
-        ...
-
-    def get_sda_enable_analog(self) -> bool:
-        '''
-        Offset: bit 6 of 0x3C
-
-        Type: boolean
-
-        Default: false
-        '''
-        ...
-
-    def get_sda_enable_pull_up(self) -> bool:
-        '''
-        Offset: bit 7 of 0x3C
-
-        Type: boolean
-
-        Default: false
-        '''
-        ...
-
-    def get_sda_active_high(self) -> bool:
-        '''
-        Offset: bit 1 of 0x36
-
-        Type: boolean
-
-        Default: false
-
-        If the SDA pin is a switch, determines if it is active high.
-        '''
-        ...
-
-    def get_sda_kill_switch(self) -> bool:
-        '''
-        Offset: bit 1 of 0x5D
-
-        Type: boolean
-
-        Default: false
-        '''
-        ...
-
-    def get_sda_limit_switch_forward(self) -> bool:
-        '''
-        Offset: bit 1 of 0x5F
-
-        Type: boolean
-
-        Default: false
-        '''
-        ...
-
-    def get_sda_limit_switch_reverse(self) -> bool:
-        '''
-        Offset: bit 1 of 0x60
-
-        Type: boolean
-
-        Default: false
-        '''
-        ...
-
-    def get_tx_config(self) -> int:
-        '''
-        Offset: 0x3D
-
-        Type: 8-bit
-
-        Default: 0
-
-        Pin configuration for the TX pin (serial transmit).
-        '''
-        ...
-
-    def get_tx_pin_function(self) -> int:
-        '''
-        Offset: 0x3D
-
-        Type: bits [0..3]
-
-        Default: 0
-
-        Pin function for the TX pin. See doc for values.
-        '''
-        ...
-
-    def get_tx_enable_analog(self) -> bool:
-        '''
-        Offset: bit 6 of 0x3D
-
-        Type: boolean
-
-        Default: false
-        '''
-        ...
-
-    def get_tx_active_high(self) -> bool:
-        '''
-        Offset: bit 2 of 0x36
-
-        Type: boolean
-
-        Default: false
-        '''
-        ...
-
-    def get_tx_kill_switch(self) -> bool:
-        '''
-        Offset: bit 2 of 0x5D
-
-        Type: boolean
-
-        Default: false
-        '''
-        ...
-
-    def get_tx_limit_switch_forward(self) -> bool:
-        '''
-        Offset: bit 2 of 0x5F
-
-        Type: boolean
-
-        Default: false
-        '''
-        ...
-
-    def get_tx_limit_switch_reverse(self) -> bool:
-        '''
-        Offset: bit 2 of 0x60
-
-        Type: boolean
-
-        Default: false
-        '''
-        ...
-
-    def get_rx_config(self) -> int:
-        '''
-        Offset: 0x3E
-
-        Type: 8-bit
-
-        Default: 0
-
-        Pin configuration for the RX pin (serial receive).
-        '''
-        ...
-
-    def get_rx_pin_function(self) -> int:
-        '''
-        Offset: 0x3E
-
-        Type: bits [0..3]
-
-        Default: 0
-
-        Pin function for the RX pin. See doc for values.
-        '''
-        ...
-
-    def get_rx_enable_analog(self) -> bool:
-        '''
-        Offset: bit 6 of 0x3E
-
-        Type: boolean
-
-        Default: false
-        '''
-        ...
-
-    def get_rx_active_high(self) -> bool:
-        '''
-        Offset: bit 3 of 0x36
-
-        Type: boolean
-
-        Default: false
-        '''
-        ...
-
-    def get_rx_kill_switch(self) -> bool:
-        '''
-        Offset: bit 3 of 0x5D
-
-        Type: boolean
-
-        Default: false
-        '''
-        ...
-
-    def get_rx_limit_switch_forward(self) -> bool:
-        '''
-        Offset: bit 3 of 0x5F
-
-        Type: boolean
-
-        Default: false
-        '''
-        ...
-
-    def get_rx_limit_switch_reverse(self) -> bool:
-        '''
-        Offset: bit 3 of 0x60
-
-        Type: boolean
-
-        Default: false
-        '''
-        ...
-
-    def get_rc_config(self) -> int:
-        '''
-        Offset: 0x3F
-
-        Type: 8-bit
-
-        Default: 0
-
-        Pin configuration for the RC pin (RC pulse input).
-        '''
-        ...
-
-    def get_rc_active_high(self) -> bool:
-        '''
-        Offset: bit 4 of 0x36
-
-        Type: boolean
-
-        Default: false
-        '''
-        ...
-
-    def get_rc_kill_switch(self) -> bool:
-        '''
-        Offset: bit 4 of 0x5D
-
-        Type: boolean
-
-        Default: false
-        '''
-        ...
-
-    def get_rc_limit_switch_forward(self) -> bool:
-        '''
-        Offset: bit 4 of 0x5F
-
-        Type: boolean
-
-        Default: false
-        '''
-        ...
-
-    def get_rc_limit_switch_reverse(self) -> bool:
-        '''
-        Offset: bit 4 of 0x60
-
-        Type: boolean
-
-        Default: false
-        '''
-        ...
-
-    def get_invert_motor_direction(self) -> bool:
-        '''
-        Offset: bit 0 of 0x1B
-
-        Type: boolean
-
-        Default: false
-
-        Reverses the motor direction if set.
-        '''
-        ...
-
-    def get_max_speed(self) -> int:
-        '''
-        Offset: 0x47
-
-        Type: unsigned 32-bit
-
-        Default: 2000000
-        Range: 0 to 500000000
-        Units: microsteps per 10000 s
-
-        Default maximum motor speed. Can be overridden at runtime.
-        '''
-        ...
-
-    def get_starting_speed(self) -> int:
-        '''
-        Offset: 0x43
-
-        Type: unsigned 32-bit
-
-        Default: 0
-        Range: 0 to 500000000
-        Units: microsteps per 10000 s
-
-        Speed below which instant acceleration/deceleration is allowed.
-        '''
-        ...
-
-    def get_max_acceleration(self) -> int:
-        '''
-        Offset: 0x4F
-
-        Type: unsigned 32-bit
-
-        Default: 40000
-        Range: 100 to 2147483647
-        Units: microsteps per 100 s^2
-
-        Default max acceleration. Can be overridden at runtime.
-        '''
-        ...
-
-    def get_max_deceleration(self) -> int:
-        '''
-        Offset: 0x4B
-
-        Type: unsigned 32-bit
-
-        Default: 0 (uses max accel)
-        Range: 100 to 2147483647
-        Units: microsteps per 100 s^2
-
-        Default max deceleration. 0 means it uses the max acceleration value.
-        '''
-        ...
-
-    def get_step_mode(self) -> int:
-        '''
-        Offset: 0x41
-
-        Type: unsigned 8-bit
-
-        Data:
-          0: Full step
-          1: 1/2 step
-          2: 1/4 step
-          3: 1/8 step
-          4: 1/16 step
-          5: 1/32 step
-          6: 1/2 step 100% (T249 only)
-          7: 1/64 step  (36v4)
-          8: 1/128 step (36v4)
-          9: 1/256 step (36v4)
-
-        Default: 0 (Full step)
-
-        The default microstepping mode, which can be overridden by a runtime command.
-        '''
-        ...
-
-    def get_current_limit(self) -> int:
-        '''
-        Offset: 0x40
-
-        Type: unsigned 8-bit
-
-        The default coil current limit for the driver. Scale/units depend on the Tic model
-        (see Section 6). This can be overridden by the "Set current limit" command.
-        '''
-        ...
-
-    def get_decay_mode(self) -> int:
-        '''
-        Offset: 0x42
-
-        Type: unsigned 8-bit
-
-        Non-HP Tics only:
-          Tic T500: 0 = Automatic
-          Tic T825: 0 = Mixed, 1 = Slow, 2 = Fast
-          Tic T834: 0 = Mixed 50%, 1 = Slow, 2 = Fast, 3 = Mixed 25%, 4 = Mixed 75%
-          Tic T249: 0 = ADMD
-
-        Default: 0
-
-        Not used by Tic 36v4 (it has a separate HP decay mode).
-        '''
-        ...
-
-    def get_auto_homing(self) -> bool:
-        '''
-        Offset: bit 1 of 0x02
-
-        Type: boolean
-
-        Default: false
-
-        Enables automatic homing feature (Section 5.6).
-        '''
-        ...
-
-    def get_auto_homing_forward(self) -> bool:
-        '''
-        Offset: bit 2 of 0x02
-
-        Type: boolean
-
-        Default: false
-
-        Determines the direction (forward or reverse) for automatic homing.
-        '''
-        ...
-
-    def get_homing_speed_towards(self) -> int:
-        '''
-        Offset: 0x61
-
-        Type: unsigned 32-bit
-
-        Default: 1000000
-        Range: 0 to 500000000
-        Units: microsteps per 10000 s
-
-        Speed used by the homing procedure when traveling toward the limit switch.
-        '''
-        ...
-
-    def get_homing_speed_away(self) -> int:
-        '''
-        Offset: 0x65
-
-        Type: unsigned 32-bit
-
-        Default: 1000000
-        Range: 0 to 500000000
-        Units: microsteps per 10000 s
-
-        Speed used by the homing procedure when traveling away from the limit switch.
-        '''
-        ...
-
-    def get_agc_mode(self) -> int:
-        '''
-        Offset: 0x6C
-
-        Type: unsigned 8-bit
-        (T249 only)
-
-        Data:
-          0: Off
-          1: On
-          2: Active off
-
-        Default: 0 (Off)
-
-        The default Active Gain Control mode on the Tic T249.
-        '''
-        ...
-
-    def get_agc_bottom_current_limit(self) -> int:
-        '''
-        Offset: 0x6D
-
-        Type: unsigned 8-bit
-        (T249 only)
-
-        Data:
-          0 = 45%
-          1 = 50%
-          2 = 55%
-          3 = 60%
-          4 = 65%
-          5 = 70%
-          6 = 75%
-          7 = 80%
-
-        Default: 7 (80%)
-
-        Controls how far AGC can reduce coil current on the Tic T249.
-        '''
-        ...
-
-    def get_agc_current_boost_steps(self) -> int:
-        '''
-        Offset: 0x6E
-
-        Type: unsigned 8-bit
-        (T249 only)
-
-        Data:
-          0 = 5 steps
-          1 = 7 steps
-          2 = 9 steps
-          3 = 11 steps
-
-        Default: 0 (5 steps)
-
-        AGC boost step setting on the Tic T249.
-        '''
-        ...
-
-    def get_agc_frequency_limit(self) -> int:
-        '''
-        Offset: 0x6F
-
-        Type: unsigned 8-bit
-        (T249 only)
-
-        Data:
-          0 = Off
-          1 = 225 Hz
-          2 = 450 Hz
-          3 = 675 Hz
-
-        Default: 0 (Off)
-
-        AGC frequency limit on the Tic T249.
-        '''
-        ...
-
-    def get_hp_enable_unrestricted_current_limits(self) -> bool:
-        '''
-        Offset: bit 0 of 0x6C
-
-        Type: boolean
-        (36v4 only)
-
-        Default: false
-
-        Enables allowing current limits above ~4000 mA on the Tic 36v4. Use with caution.
-        '''
-        ...
-
-    def get_hp_fixed_off_time(self) -> int:
-        '''
-        Offset: 0xF6
-
-        Type: unsigned 8-bit
-        (36v4 only)
-
-        Default: 25.5 us
-
-        Range: 0.5 us to 128.0 us
-
-        "Fixed off time" for the DRV8711-based driver on Tic 36v4.
-        '''
-        ...
-
-    def get_hp_current_trip_blanking_time(self) -> int:
-        '''
-        Offset: 0xF8
-
-        Type: unsigned 8-bit
-        (36v4 only)
-
-        Default: 1.00 us
-
-        Range: 1.00 us to 5.10 us
-
-        The minimum on-time in each PWM cycle for the Tic 36v4 driver.
-        '''
-        ...
-
-    def get_hp_enable_adaptive_blanking_time(self) -> bool:
-        '''
-        Offset: bit 0 of 0xF9
-
-        Type: boolean
-        (36v4 only)
-
-        Default: true
-
-        Reduces blanking time for low-current steps if enabled (DRV8711 setting).
-        '''
-        ...
-
-    def get_hp_mixed_decay_transition_time(self) -> int:
-        '''
-        Offset: 0xFA
-
-        Type: unsigned 8-bit
-        (36v4 only)
-
-        Default: 8.0 us
-        Range: 0.0 us to 127.5 us
-
-        The time after which the driver switches from fast to slow decay in mixed mode.
-        '''
-        ...
-
-    def get_hp_decay_mode(self) -> int:
-        '''
-        Offset: 0xFB
-
-        Type: unsigned 8-bit
-        (36v4 only)
-
-        The decay mode for high-power Tics (36v4). For example: slow, slow_mixed, fast, mixed, etc.
-        '''
         ...
 
 
 class TicSerial(TicBase):
     """
-    Serial driver for Tic stepper motor controllers.
+    **Description**: Serial driver for Tic stepper motor controllers.
     Reference: https://www.pololu.com/docs/0J71/9
     """
 
@@ -2105,9 +2247,10 @@ class TicSerial(TicBase):
     def _block_read(self, command_code: int, offset: int, length: int, format_response: Any = None) -> Any: ...
     def _read_response(self, length: int) -> bytes: ...
 
+
 class TicI2C(TicBase):
     """
-    I2C driver for Tic stepper motor controllers.
+    **Description**: I2C driver for Tic stepper motor controllers.
     Reference: https://www.pololu.com/docs/0J71/10
     """
 
@@ -2115,9 +2258,10 @@ class TicI2C(TicBase):
     def _send_command(self, command_code: int, format: str, value: Optional[int] = None) -> None: ...
     def _block_read(self, command_code: int, offset: int, length: int, format_response: Any = None) -> Any: ...
 
+
 class TicUSB(TicBase):
     """
-    USB driver for Tic stepper motor controllers.
+    **Description**: USB driver for Tic stepper motor controllers.
     Reference: https://www.pololu.com/docs/0J71/11
     """
 

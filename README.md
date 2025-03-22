@@ -348,6 +348,13 @@ For more details, see the official [settings reference](https://www.pololu.com/d
 
 # Version history
 
+## 0.3.0 (April 19, 2025)
+
+- Added a `.pyi` file for IDE/editor autocompletion and convenient documentation references.
+- Added support for Circuit Python
+- Fixed a bug with `set_current_limit()`
+- Handle gracefully a serial read returning `None`
+
 ## 0.2.2 (May 14, 2021)
 
 - Fixed some bugs for Micropython
@@ -388,6 +395,7 @@ docker run -it -v ${PWD}:/base -w /base jphalip/circuitpython-linux micropython 
 
 To release a new version of this library:
 
+- Create a virtualenv and install the dependencies in `requirements.txt`
 - Update version number in `src/ticlib/__init__.py`
 - Add release notes in the "Version history" section above.
 - Create and push tag of the form: `v<VERSION_NUMBER>` (e.g. `v.0.2.1`)

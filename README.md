@@ -344,6 +344,10 @@ For more details, see the official [settings reference](https://www.pololu.com/d
 
 # Version history
 
+## 0.2.3 (March 22, 2024)
+
+- Added a `.pyi` document for IDE/editor autocompletion and more convenient documentation references.
+
 ## 0.2.2 (May 14, 2021)
 
 - Fixed some bugs for Micropython

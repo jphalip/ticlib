@@ -346,7 +346,7 @@ For more details, see the official [settings reference](https://www.pololu.com/d
 
 ## 0.2.3 (March 22, 2025)
 
-- Added a `.pyi` document for IDE/editor autocompletion and more convenient documentation references.
+- Added a `.pyi` file for IDE/editor autocompletion and convenient documentation references.
 
 ## 0.2.2 (May 14, 2021)
 

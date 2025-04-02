@@ -158,6 +158,10 @@ tic.set_target_velocity(value)
 
 For more details, see the official [command reference](https://www.pololu.com/docs/0J71/8).
 
+Please note:
+- `tic.set_current_limit(value)` is encoded as described [here](https://www.pololu.com/docs/0J71/6#setting-current-limit) rather than sent as a value in mA.
+- `tic.set_step_mode(value)` is encdoed as described [here](https://www.pololu.com/docs/0J71/8#cmd-set-step-mode) rather than sent as a fraction.
+
 # Variables
 
 Available variables:

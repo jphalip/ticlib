@@ -183,7 +183,7 @@ COMMANDS = [
     ('set_max_acceleration', 0xEA, THIRTY_TWO_BITS),
     ('set_max_deceleration', 0xE9, THIRTY_TWO_BITS),
     ('set_step_mode', 0x94, SEVEN_BITS),
-    ('set_current_limit', 0x91, THIRTY_TWO_BITS),
+    ('set_current_limit', 0x91, SEVEN_BITS),
     ('set_decay_mode', 0x92, SEVEN_BITS),
     ('set_agc_option', 0x98, SEVEN_BITS),
 ]

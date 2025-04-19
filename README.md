@@ -5,7 +5,7 @@ This library supports serial, I²C, and USB connections for Python3; and serial 
 # Example code
 
 ```python
-from src.ticlib import TicUSB
+from ticlib import TicUSB
 from time import sleep
 
 tic = TicUSB()
@@ -40,7 +40,7 @@ Example using Python 3 and the [pyserial](https://pypi.org/project/pyserial/) li
 
 ```python
 import serial
-from src.ticlib import TicSerial
+from ticlib import TicSerial
 
 port = serial.Serial("/dev/ttyS0", baud_rate=9600, timeout=0.1, write_timeout=0.1)
 tic = TicSerial(port)
@@ -113,7 +113,7 @@ The USB controller has a dependency on the [pyusb](https://pypi.org/project/pyus
 Example:
 
 ```python
-from src.ticlib import TicUSB
+from ticlib import TicUSB
 
 tic = TicUSB()
 ```
@@ -157,6 +157,10 @@ tic.set_target_velocity(value)
 ```
 
 For more details, see the official [command reference](https://www.pololu.com/docs/0J71/8).
+
+Please note:
+- `tic.set_current_limit(value)` is encoded as described [here](https://www.pololu.com/docs/0J71/6#setting-current-limit) rather than sent as a value in mA.
+- `tic.set_step_mode(value)` is encdoed as described [here](https://www.pololu.com/docs/0J71/8#cmd-set-step-mode) rather than sent as a fraction.
 
 # Variables
 

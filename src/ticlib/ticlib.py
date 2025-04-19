@@ -183,7 +183,7 @@ COMMANDS = [
     ('set_max_acceleration', 0xEA, THIRTY_TWO_BITS),
     ('set_max_deceleration', 0xE9, THIRTY_TWO_BITS),
     ('set_step_mode', 0x94, SEVEN_BITS),
-    ('set_current_limit', 0x91, THIRTY_TWO_BITS),
+    ('set_current_limit', 0x91, SEVEN_BITS),
     ('set_decay_mode', 0x92, SEVEN_BITS),
     ('set_agc_option', 0x98, SEVEN_BITS),
 ]
@@ -542,7 +542,9 @@ class TicSerial(TicBase):
         # Read the returned value
         result = self._read_response(length)
         # Verify and format the returned value
-        if len(result) != length:
+        if result is None:
+            raise RuntimeError("Read response returned 'None', read likely timed out")
+        elif len(result) != length:
             raise RuntimeError("Expected to read {} bytes, got {}.".format(length, len(result)))
         if format_response is None:
             return result

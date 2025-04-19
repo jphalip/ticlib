@@ -374,6 +374,12 @@ For Micropython:
 docker run -it -v ${PWD}:/base -w /base mitchins/micropython-linux micropython /base/tests/tests.py
 ```
 
+For CircuitPython:
+
+```
+docker run -it -v ${PWD}:/base -w /base jphalip/circuitpython-linux micropython /base/tests/tests.py
+```
+
 # Notes for project maintainers
 
 To release a new version of this library:
@@ -381,5 +387,6 @@ To release a new version of this library:
 - Update version number in `src/ticlib/__init__.py`
 - Add release notes in the "Version history" section above.
 - Create and push tag of the form: `v<VERSION_NUMBER>` (e.g. `v.0.2.1`)
+- Delete existing `dist/` directory, if any.
 - Run: `python3 -m build`
 - Run: `python3 -m twine upload dist/*`

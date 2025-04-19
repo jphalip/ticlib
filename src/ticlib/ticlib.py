@@ -31,7 +31,7 @@ __all__ = [
 
 import sys
 
-if sys.implementation.name == 'micropython':
+if sys.implementation.name in ['micropython', 'circuitpython']:
     def partial(function, *args):
         """
         Substitute to Python's `functools.partial`

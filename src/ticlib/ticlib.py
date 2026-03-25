@@ -30,6 +30,7 @@ __all__ = [
 ]
 
 import sys
+from typing import Callable, NamedTuple, Optional
 
 if sys.implementation.name in ['micropython', 'circuitpython']:
     def partial(function, *args):
@@ -61,7 +62,6 @@ try:
     import usb.core as usb_core
 except ImportError:
     usb_core = None
-
 
 class MachineI2CBackend(object):
     """
@@ -297,7 +297,7 @@ SETTINGS = [
 
     # Pin Configuration ---------------------------------------------
     # SCL
-    ('scl_config', 0x3B, 1, None),
+    ('scl_config', 0x3B, 1, unsigned_int),
     ('scl_pin_function', 0x3B, 1, partial(bit_range, 0, 3)),
     ('scl_enable_analog', 0x3B, 1, partial(boolean, 6)),
     ('scl_enable_pull_up', 0x3B, 1, partial(boolean, 7)),
@@ -306,7 +306,7 @@ SETTINGS = [
     ('scl_limit_switch_forward', 0x5F, 1, partial(boolean, 0)),
     ('scl_limit_switch_reverse', 0x60, 1, partial(boolean, 0)),
     # SDA
-    ('sda_config', 0x3C, 1, None),
+    ('sda_config', 0x3C, 1, unsigned_int),
     ('sda_pin_function', 0x3C, 1, partial(bit_range, 0, 3)),
     ('sda_enable_analog', 0x3C, 1, partial(boolean, 6)),
     ('sda_enable_pull_up', 0x3C, 1, partial(boolean, 7)),
@@ -315,7 +315,7 @@ SETTINGS = [
     ('sda_limit_switch_forward', 0x5F, 1, partial(boolean, 1)),
     ('sda_limit_switch_reverse', 0x60, 1, partial(boolean, 1)),
     # TX
-    ('tx_config', 0x3D, 1, None),
+    ('tx_config', 0x3D, 1, unsigned_int),
     ('tx_pin_function', 0x3D, 1, partial(bit_range, 0, 3)),
     ('tx_enable_analog', 0x3D, 1, partial(boolean, 6)),
     ('tx_active_high', 0x36, 1, partial(boolean, 2)),
@@ -323,7 +323,7 @@ SETTINGS = [
     ('tx_limit_switch_forward', 0x5F, 1, partial(boolean, 2)),
     ('tx_limit_switch_reverse', 0x60, 1, partial(boolean, 2)),
     # RX
-    ('rx_config', 0x3E, 1, None),
+    ('rx_config', 0x3E, 1, unsigned_int),
     ('rx_pin_function', 0x3E, 1, partial(bit_range, 0, 3)),
     ('rx_enable_analog', 0x3E, 1, partial(boolean, 6)),
     ('rx_active_high', 0x36, 1, partial(boolean, 3)),
@@ -331,7 +331,7 @@ SETTINGS = [
     ('rx_limit_switch_forward', 0x5F, 1, partial(boolean, 3)),
     ('rx_limit_switch_reverse', 0x60, 1, partial(boolean, 3)),
     # RC
-    ('rc_config', 0x3F, 1, None),
+    ('rc_config', 0x3F, 1, unsigned_int),
     ('rc_active_high', 0x36, 1, partial(boolean, 4)),
     ('rc_kill_switch', 0x5D, 1, partial(boolean, 4)),
     ('rc_limit_switch_forward', 0x5F, 1, partial(boolean, 4)),

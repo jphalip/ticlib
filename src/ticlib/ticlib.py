@@ -198,9 +198,9 @@ GET_SETTING_CMD = 0xA8
 VARIABLES = [
     # General status  -------------------------------------
     ('operation_state', 0x00, 1, unsigned_int),
-    ('misc_flags', 0x01, 1, None),
-    ('error_status', 0x02, 2, None),
-    ('error_occured', 0x04, 4, None),
+    ('misc_flags', 0x01, 1, bit_range(0,4)),
+    ('error_status', 0x02, 2, bit_range(0,8)),
+    ('error_occured', 0x04, 4, bit_range(0,19)),
 
     # Step planning ---------------------------------------
     ('planning_mode', 0x09, 1, unsigned_int),
@@ -225,8 +225,8 @@ VARIABLES = [
     ('analog_reading_sda', 0x41, 2, unsigned_int),
     ('analog_reading_tx', 0x43, 2, unsigned_int),
     ('analog_reading_rx', 0x45, 2, unsigned_int),
-    ('digital_readings', 0x47, 1, None),
-    ('pin_states', 0x48, 1, None),
+    ('digital_readings', 0x47, 1, bit_range(0,4)),
+    ('pin_states', 0x48, 1, bit_range(0,7)),
     ('step_mode', 0x49, 1, unsigned_int),
     ('current_limit', 0x4A, 1, unsigned_int),
     ('decay_mode', 0x4B, 1, unsigned_int),  # Not valid for 36v4

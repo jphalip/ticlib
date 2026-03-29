@@ -2,3 +2,8 @@
 build/**
 dist/**
 **/*.egg-info/**
+
+# Venv artifacts
+**/uv.lock
+venv/
+.venv/

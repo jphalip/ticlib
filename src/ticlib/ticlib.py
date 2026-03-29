@@ -266,7 +266,7 @@ SETTINGS = [
     ('current_limit_during_error', 0x31, 1, unsigned_int),
 
     # Serial --------------------------------------------------------
-    ('serial_baud_rate', 0x06, 2, unsigned_int),  # Returns odd result
+    ('serial_baud_rate', 0x05, 2, unsigned_int),  # Returns odd result
     ('serial_enable_alt_device_number', 0x6A, 1, partial(boolean, 7)),
     ('serial_14bit_device_number', 0x0B, 1, partial(boolean, 3)),
     ('serial_response_delay', 0x5E, 1, unsigned_int),

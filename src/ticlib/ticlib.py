@@ -243,7 +243,7 @@ VARIABLES = [
     ('agc_frequency_limit', 0x59, 1, unsigned_int),
 
     # 36v4-only -------------------------------------------
-    ('last_hp_driver_errors', 0xFF, 1, None),
+    ('last_hp_driver_errors', 0xFF, 1, bit_range(0,7)),
 ]
 
 
